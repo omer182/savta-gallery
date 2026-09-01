@@ -481,9 +481,12 @@ fallback if one is missed or runs long. **Archive the raw audio permanently** (�
 
 ### Transcription
 
-**Whisper large-v3 locally** (whisper.cpp on Apple Silicon) — free, no API key, nothing
-leaves the house. Hebrew accuracy is good but not clean; expect errors on names, places,
-and her particular idiom, so a human review pass is **mandatory**, not optional.
+**Whisper large-v3 locally, on the Mac** (whisper.cpp on Apple Silicon) — free, no API key,
+nothing leaves the house, and it is where the audio already is. This is a **Mac-side prep
+step, not part of the server import** (see "Where each step runs"): the transcripts go into
+`manifest.csv` before the folder is copied across, so the home server never needs Whisper
+installed. Hebrew accuracy is good but not clean; expect errors on names, places, and her
+particular idiom, so a human review pass is **mandatory**, not optional.
 
 Do **not** run an LLM "cleanup" pass over the transcripts. It smooths away exactly the
 phrasing that makes them hers, which is the premise of the site. Fix Whisper's errors, cut
@@ -598,11 +601,36 @@ back in.
 **Validate on session one.** Run the importer over the first ~40 paintings and skim the
 groupings before investing eleven more sessions in the approach.
 
-`npm run import -- data/import/2026-09-06` walks the manifest and **calls the same
-`processImage()` used by the web upload endpoint** — one code path for derivatives,
-thumbhash and EXIF. It also runs Whisper over each memo and stores the raw transcript as
-the draft `story`. Everything lands as `status='draft'`, `needs_crop=true`,
-`needs_review=true`.
+### Where each step runs
+
+The work splits by what each machine has. **The importer must run on the home server**:
+SQLite over a network share breaks file locking and can corrupt the database, so the
+process that writes must be on the box that owns the file.
+
+| Step | Where | Why |
+| --- | --- | --- |
+| Dump photos off the phone | Mac | Image Capture / AirDrop originals, EXIF intact |
+| Transcribe the memos | **Mac** | The audio is there, and Apple Silicon runs whisper.cpp fast |
+| Fill `manifest.csv` | Mac | Paste transcripts beside the rows typed live in the session |
+| Copy session folder to the server | — | Into `<stack-dir>/data/import/<date>/`; no new mount, `./data:/data` already exists |
+| Run the importer | **Home server** | Writes rows + sharp derivatives directly into `/data` |
+| Crop + fix transcripts | Browser | `/admin/import-review`, from anywhere |
+
+Run it from **Portainer → Containers → savta-gallary → Console**:
+
+```
+node scripts/import.mjs /data/import/2026-09-06
+```
+
+The script is shipped in the image as plain JS (the standalone build has no `tsx`), so the
+Dockerfile must copy it explicitly — `.next/standalone` will not include it otherwise.
+
+It walks the manifest and **calls the same `processImage()` used by the web upload
+endpoint** — one code path for derivatives, thumbhash and EXIF. Everything lands as
+`status='draft'`, `needs_crop=true`, `needs_review=true`.
+
+Once `/admin/import-review` is done, the staging folder is redundant — every original has
+already been copied into `/data/images/originals` — so delete it to reclaim the space.
 
 ### `/admin/import-review` — one screen, one pass
 
