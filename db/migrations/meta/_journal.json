@@ -15,6 +15,20 @@
       "when": 1788288710676,
       "tag": "0001_fts",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1788290165832,
+      "tag": "0002_image_crop_derived",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1788290702784,
+      "tag": "0003_nullable_painting_id",
+      "breakpoints": true
     }
   ]
 }

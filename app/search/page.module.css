@@ -1,0 +1,42 @@
+.page {
+  padding-bottom: 80px;
+}
+.bar {
+  padding-block: clamp(14px, 4vw, 30px) 0;
+}
+.bar input {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #c9bfa8;
+  outline: none;
+  padding: 8px 2px;
+  color: var(--ink);
+  text-align: start;
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(24px, 6vw, 34px);
+}
+.bar input::placeholder {
+  color: #b6ac96;
+}
+.bar input:focus-visible {
+  outline: none;
+  border-bottom-color: var(--umber);
+}
+.count {
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--muted);
+  min-height: 1.2em;
+}
+.results {
+  margin-top: clamp(24px, 4vw, 36px);
+}
+.hint {
+  font-family: var(--serif);
+  font-size: 20px;
+  color: var(--muted-lt);
+  padding: 52px 0;
+}

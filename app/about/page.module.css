@@ -1,0 +1,27 @@
+.prose {
+  max-width: 620px;
+  padding-bottom: 80px;
+  padding-top: 34px;
+}
+.prose h2 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(26px, 6vw, 32px);
+  margin: 0 0 20px;
+}
+.prose p {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(19px, 2.4vw, 21px);
+  line-height: 1.85;
+  color: var(--ink-soft);
+  margin: 0 0 1.05em;
+}
+.note {
+  font-family: var(--sans) !important;
+  font-size: 14px !important;
+  font-weight: 300;
+  color: var(--muted) !important;
+  margin-top: 26px !important;
+  line-height: 1.6 !important;
+}

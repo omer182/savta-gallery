@@ -80,14 +80,34 @@ export const images = sqliteTable(
   "images",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
-    paintingId: integer("painting_id")
-      .notNull()
-      .references(() => paintings.id, { onDelete: "cascade" }),
+
+    /**
+     * Null while an upload is in flight: the background upload starts the moment
+     * she confirms the crop, before she has finished typing and before the
+     * painting row exists. Attached on save. Orphans older than a day are swept.
+     */
+    paintingId: integer("painting_id").references(() => paintings.id, {
+      onDelete: "cascade",
+    }),
 
     /** Content-hashed path under /data/images/originals. Never modified after it lands. */
     originalPath: text("original_path").notNull(),
     originalHash: text("original_hash").notNull(),
 
+    /**
+     * Crop rectangle in original-pixel coordinates, applied server-side when
+     * derivatives are built. Null for web uploads, which arrive already cropped.
+     * Imported photos keep their uncropped original, so re-cropping stays possible.
+     */
+    cropJson: text("crop_json"),
+
+    /**
+     * Hash of the cropped pixels — distinct from originalHash, and what the
+     * public derivative URLs are keyed on. Null until processing completes.
+     */
+    derivedHash: text("derived_hash"),
+
+    /** Intrinsic size of the *derived* (cropped) image, for layout and srcset. */
     width: integer("width"),
     height: integer("height"),
     /** ~30-byte blur placeholder, base64. Drives the blur-up. */

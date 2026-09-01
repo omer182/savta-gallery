@@ -1,0 +1,50 @@
+/* Large, unambiguous targets — used one-handed, on a phone, by someone who
+   opens this a few times a month. */
+.picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 240px;
+  border: 1px dashed #cfc4ab;
+  background: var(--placard);
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 19px;
+  color: var(--ink-soft);
+  transition: border-color 0.2s, background 0.2s;
+}
+.picker:hover {
+  border-color: var(--umber);
+  background: #fff;
+}
+.pickerIcon {
+  font-family: var(--serif);
+  font-size: 44px;
+  line-height: 1;
+  color: var(--muted);
+}
+
+.cropStage {
+  position: relative;
+  width: 100%;
+  height: min(62vh, 520px);
+  background: #2a251e;
+  margin-bottom: 22px;
+}
+
+.uploadState {
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--muted);
+  margin-bottom: 22px;
+  min-height: 20px;
+}
+.retry {
+  color: var(--umber);
+  border-bottom: 1px solid var(--line);
+}
+.retry:hover {
+  color: var(--ink);
+}

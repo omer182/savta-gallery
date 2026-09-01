@@ -1,0 +1,126 @@
+.sheet {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+  margin-bottom: 30px;
+}
+.cell {
+  display: block;
+  text-align: start;
+  width: 100%;
+}
+.stage {
+  display: block;
+  position: relative;
+  background: #ded7c8;
+  overflow: hidden;
+  aspect-ratio: 1;
+}
+.photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+/* The proposed rectangle: a bright outline with the rest dimmed, so a wrong
+   detection is obvious at thumbnail size. */
+.rect {
+  position: absolute;
+  outline: 2px solid #fff;
+  box-shadow: 0 0 0 9999px rgba(28, 26, 21, 0.5);
+  pointer-events: none;
+}
+.meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 6px;
+}
+.metaTitle {
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.conf {
+  font-size: 11.5px;
+  font-weight: 300;
+  color: var(--muted-lt);
+  white-space: nowrap;
+}
+.confLow {
+  font-size: 11.5px;
+  font-weight: 400;
+  color: #8c3a2e;
+  white-space: nowrap;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(28, 26, 21, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 50;
+  overflow: auto;
+}
+.modalInner {
+  background: var(--paper);
+  padding: 22px;
+  max-width: 720px;
+  width: 100%;
+}
+.modalTitle {
+  font-family: var(--serif);
+  font-size: 21px;
+  margin: 0 0 14px;
+}
+.modalStage {
+  position: relative;
+  background: #ded7c8;
+  max-height: 55vh;
+  overflow: hidden;
+  display: flex;
+}
+.modalPhoto {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+.numbers {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+}
+.numbers label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 300;
+  color: var(--muted);
+}
+.numbers input {
+  font-size: 15px !important;
+  padding: 10px !important;
+}
+.modalActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+@media (max-width: 560px) {
+  .numbers {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .modalActions {
+    flex-direction: column;
+  }
+}

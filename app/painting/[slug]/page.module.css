@@ -1,0 +1,117 @@
+.detail {
+  padding-bottom: 80px;
+}
+.back {
+  font-size: 14px;
+  color: var(--umber);
+}
+.back:hover {
+  color: var(--ink);
+}
+
+.top {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  margin-top: 24px;
+}
+@media (min-width: 900px) {
+  .top {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 46px;
+  }
+  .art {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 760px;
+  }
+  .side {
+    flex: 0 0 300px;
+  }
+}
+
+.heroFrame {
+  background: #fff;
+  padding: 10px;
+  box-shadow: var(--sh-hero);
+}
+
+.thumbs {
+  display: flex;
+  gap: 9px;
+  margin-top: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.thumb {
+  width: 58px;
+  background: #fff;
+  padding: 2px;
+  border: 1px solid var(--line);
+  opacity: 0.6;
+  transition: opacity 0.2s, border-color 0.2s;
+}
+.thumb:hover,
+.thumbOn {
+  opacity: 1;
+  border-color: var(--ink);
+}
+
+.taglist {
+  display: flex;
+  gap: 13px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+.taglist a {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--umber);
+  border-bottom: 1px solid #d8cdb4;
+  padding-bottom: 1px;
+}
+.taglist a:hover {
+  color: var(--ink);
+}
+
+/* The story is the point of the site: full width below the painting at a
+   ~66-character measure, not squeezed into a sidebar (PLAN.md §2). */
+.story {
+  max-width: 620px;
+  margin: 44px auto 0;
+  border-top: 1px solid var(--line-soft);
+  padding-top: 34px;
+}
+.story p {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(19px, 2.4vw, 21px);
+  line-height: 1.85; /* Hebrew needs more leading than Latin */
+  color: var(--ink-soft);
+  margin: 0 0 1.05em;
+}
+.story p:last-child {
+  margin-bottom: 0;
+}
+
+.pager {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  max-width: 620px;
+  margin: 46px auto 0;
+  padding-top: 22px;
+  border-top: 1px solid var(--line-soft);
+  font-size: 14px;
+  color: var(--umber);
+}
+.pager a {
+  max-width: 46%;
+}
+.pager a:last-child {
+  text-align: end;
+}
+.pager a:hover {
+  color: var(--ink);
+}

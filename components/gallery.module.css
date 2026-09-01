@@ -1,0 +1,266 @@
+/* Public gallery chrome — PLAN.md §2. All layout uses logical properties so
+   nothing is pinned to a physical side under dir="rtl". */
+
+.wrap {
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: var(--pad);
+}
+
+/* ---------------- header ---------------- */
+.head {
+  padding-block: clamp(30px, 7vw, 56px) clamp(20px, 4vw, 30px);
+}
+.headRow {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+@media (min-width: 760px) {
+  .headRow {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+  }
+}
+.marque {
+  display: block;
+  text-align: start;
+}
+.marque h1 {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(28px, 6.4vw, 44px);
+  line-height: 1.15;
+  text-wrap: balance;
+  max-width: 15ch;
+}
+@media (min-width: 760px) {
+  .marque h1 {
+    max-width: none;
+  }
+}
+/* Hebrew has no uppercase, so the quiet-label hierarchy is size/weight/colour. */
+.sub {
+  margin-top: 9px;
+  font-size: 12.5px;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+.nav {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+@media (min-width: 760px) {
+  .nav {
+    gap: 26px;
+  }
+}
+.navlink {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--umber);
+  padding-bottom: 3px;
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+.navlink:hover {
+  color: var(--ink);
+}
+.navOn {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+.navAdd {
+  color: var(--ink);
+  border-bottom-color: var(--line);
+}
+.rule {
+  height: 1px;
+  background: var(--line);
+  max-width: var(--maxw);
+  margin-inline: auto;
+}
+
+/* ---------------- tag strip ---------------- */
+.tagbar {
+  margin-block: 26px 30px;
+}
+.tagscroll {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding-bottom: 6px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  /* RTL: the row runs right→left, so the fade belongs at the left edge. */
+  mask-image: linear-gradient(to left, #000 0, #000 calc(100% - 34px), transparent 100%);
+}
+.tagscroll::-webkit-scrollbar {
+  display: none;
+}
+.tag {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--muted-lt);
+  padding-bottom: 3px;
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+.tag:hover {
+  color: var(--ink-soft);
+}
+.tagOn {
+  color: var(--ink);
+  font-weight: 400;
+  border-bottom-color: var(--ink);
+}
+
+/* ---------------- masonry ---------------- */
+/* CSS Grid row-spans, never `columns`: multi-column fills column-by-column and
+   would scramble sort_order. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gap);
+  grid-auto-rows: 4px;
+  padding-bottom: 70px;
+}
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.card {
+  display: block;
+  opacity: 0;
+  transform: translateY(16px);
+}
+.cardIn {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.55s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.cardInner {
+  display: block;
+}
+.frame {
+  /* Must be block: it is the containing block for the absolute image layer. */
+  display: block;
+  position: relative;
+  background: #fff;
+  padding: 7px;
+  box-shadow: var(--sh-frame);
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s;
+}
+@media (min-width: 640px) {
+  .frame {
+    padding: 8px;
+  }
+}
+@media (hover: hover) and (pointer: fine) {
+  .card:hover .frame {
+    transform: translateY(-4px);
+    box-shadow: var(--sh-lift);
+  }
+}
+
+/* ---------------- placard ---------------- */
+.placard {
+  background: var(--placard);
+  border: 1px solid var(--line);
+  box-shadow: var(--sh-card);
+  padding: 9px 12px;
+  text-align: start;
+}
+.placardTitle {
+  font-family: var(--serif);
+  font-weight: 600;
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+.placardMeta {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.placardStatic {
+  margin-top: 9px;
+}
+.placardHover {
+  position: absolute;
+  inset-inline-start: 13px;
+  bottom: 13px;
+  max-width: calc(100% - 26px);
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+  transition: opacity 0.28s, transform 0.28s;
+  display: none;
+}
+/* The placard is the signature element and the phone is the primary surface,
+   so on touch it is always visible below the frame rather than on hover. */
+@media (hover: hover) and (pointer: fine) and (min-width: 640px) {
+  .placardHover {
+    display: block;
+  }
+  .card:hover .placardHover,
+  .card:focus-visible .placardHover {
+    opacity: 1;
+    transform: none;
+  }
+  .placardStatic {
+    display: none;
+  }
+}
+
+/* ---------------- misc ---------------- */
+.empty {
+  font-family: var(--serif);
+  font-size: 22px;
+  color: var(--muted);
+  padding: 56px 0 80px;
+}
+.more {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 80px;
+}
+.moreLink {
+  font-size: 14px;
+  color: var(--umber);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 3px;
+}
+.moreLink:hover {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+.footer {
+  border-top: 1px solid var(--line);
+  padding: 24px var(--pad) 30px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--muted-lt);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    opacity: 1;
+    transform: none;
+  }
+}

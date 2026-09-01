@@ -12,14 +12,24 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
     "db:reset": "tsx scripts/migrate.ts && tsx scripts/seed.ts",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "hash": "tsx scripts/hash.ts",
+    "icons": "tsx scripts/icons.ts",
+    "import": "tsx scripts/import.ts",
+    "test:session": "tsx scripts/make-test-session.ts"
   },
   "dependencies": {
+    "@node-rs/argon2": "^2.2.0",
     "better-sqlite3": "^12.11.1",
     "drizzle-orm": "^0.45.2",
+    "exifr": "^7.1.3",
+    "heic2any": "^0.0.4",
     "next": "16.3.4",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "react-easy-crop": "^6.2.3",
+    "sharp": "^0.35.4",
+    "thumbhash": "^0.1.1"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^9.6.0",

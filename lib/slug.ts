@@ -43,7 +43,13 @@ export function paintingSlug(publicId: string, title: string): string {
  * may contain hyphens, because the id is always leading base36.
  */
 export function publicIdFromSlug(slug: string): string {
-  return decodeURIComponent(slug).split("-", 1)[0]!.toLowerCase();
+  let s = slug;
+  try {
+    s = decodeURIComponent(slug);
+  } catch {
+    /* malformed percent-escape: the leading id is still readable as-is */
+  }
+  return s.split("-", 1)[0]!.toLowerCase();
 }
 
 export function paintingHref(publicId: string, title: string): string {

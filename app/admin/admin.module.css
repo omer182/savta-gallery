@@ -1,0 +1,252 @@
+/* Admin stays inside the site's design system — warm paper, serif headings, the
+   same restraint (PLAN.md §2). The only concession to "admin-ness" is layout:
+   a single focused column with roomy, finger-sized controls. */
+
+.shell {
+  max-width: 620px;
+  margin-inline: auto;
+  padding: clamp(26px, 6vw, 48px) var(--pad) 90px;
+}
+.wide {
+  max-width: 1100px;
+}
+
+.h1 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(26px, 6vw, 34px);
+  margin: 0 0 6px;
+  line-height: 1.2;
+}
+.lede {
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--muted);
+  margin: 0 0 30px;
+}
+
+.field {
+  margin-bottom: 26px;
+}
+.label {
+  display: block;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--ink-soft);
+  margin-bottom: 8px;
+}
+.hint {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+/* Large targets: this is used one-handed on a phone. */
+.input,
+.textarea,
+.select {
+  width: 100%;
+  background: var(--placard);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 14px 14px;
+  font-family: var(--sans);
+  font-size: 17px;
+  color: var(--ink);
+  outline: none;
+  text-align: start;
+}
+.input:focus-visible,
+.textarea:focus-visible,
+.select:focus-visible {
+  border-color: var(--umber);
+  outline: 2px solid var(--umber);
+  outline-offset: 2px;
+}
+.textarea {
+  font-family: var(--serif);
+  font-size: 19px;
+  line-height: 1.8;
+  min-height: 220px;
+  resize: vertical;
+}
+.row {
+  display: flex;
+  gap: 12px;
+}
+.row > * {
+  flex: 1;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 17px 20px;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 2px;
+  font-size: 17px;
+  font-weight: 400;
+  transition: opacity 0.2s;
+}
+.btn:hover {
+  opacity: 0.88;
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.btnQuiet {
+  background: transparent;
+  color: var(--umber);
+  border: 1px solid var(--line);
+}
+.btnDanger {
+  background: transparent;
+  color: #8c3a2e;
+  border: 1px solid #e0cdc6;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.chip {
+  padding: 10px 15px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--placard);
+  font-size: 15px;
+  font-weight: 300;
+  color: var(--muted);
+  transition: all 0.15s;
+}
+.chipOn {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: #fff;
+}
+
+.steps {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 26px;
+}
+.step {
+  height: 2px;
+  flex: 1;
+  background: var(--line);
+}
+.stepOn {
+  background: var(--ink);
+}
+
+.note {
+  background: var(--placard);
+  border: 1px solid var(--line);
+  padding: 14px 16px;
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--ink-soft);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+.error {
+  border-color: #e0cdc6;
+  color: #8c3a2e;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.listItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.listThumb {
+  width: 54px;
+  flex: 0 0 54px;
+  background: #fff;
+  padding: 2px;
+  border: 1px solid var(--line);
+}
+.listMain {
+  flex: 1;
+  min-width: 0;
+}
+.listTitle {
+  font-family: var(--serif);
+  font-size: 19px;
+  color: var(--ink);
+}
+.listMeta {
+  font-size: 12.5px;
+  font-weight: 300;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.badge {
+  font-size: 11.5px;
+  font-weight: 400;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.badgeDraft {
+  color: #8a6a2e;
+  border-color: #e2d4b4;
+}
+.badgePublished {
+  color: #4a6b4a;
+  border-color: #cadbc9;
+}
+.badgeHidden {
+  color: var(--muted-lt);
+}
+
+.adminNav {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+.adminNav a {
+  color: var(--umber);
+}
+.adminNav a:hover {
+  color: var(--ink);
+}
+
+.preview {
+  background: #fff;
+  padding: 8px;
+  box-shadow: var(--sh-frame);
+  margin-bottom: 22px;
+}
+
+.progress {
+  height: 3px;
+  background: var(--line);
+  overflow: hidden;
+  margin-top: 10px;
+}
+.progressBar {
+  height: 100%;
+  background: var(--umber);
+  transition: width 0.25s ease;
+}
