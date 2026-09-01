@@ -1,40 +1,57 @@
+/*
+ * Bespoke design tokens — PLAN.md §2. Locked; do not reinterpret.
+ * A single warm-paper visual world: no dark variant, by decision.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #f7f4ee;
+  --ink: #1c1a15;
+  --ink-soft: #2a251e;
+  --muted: #8a8272;
+  --muted-lt: #9a9280;
+  --umber: #6e5a3a;
+  --placard: #fffefa;
+  --line: #e4decf;
+  --line-soft: #eee8dc;
+
+  --sh-frame: 0 1px 3px rgba(40, 32, 20, 0.08), 0 10px 26px rgba(40, 32, 20, 0.07);
+  --sh-lift: 0 2px 6px rgba(40, 32, 20, 0.1), 0 22px 44px rgba(40, 32, 20, 0.12);
+  --sh-card: 0 1px 2px rgba(40, 32, 20, 0.06), 0 6px 18px rgba(40, 32, 20, 0.05);
+  --sh-hero: 0 2px 6px rgba(40, 32, 20, 0.1), 0 24px 60px rgba(40, 32, 20, 0.1);
+
+  /* Frank Ruhl Libre carries Hebrew and Latin, so years and dimensions need no
+     second face. Cormorant/Karla are retired — neither has Hebrew glyphs. */
+  --serif: var(--font-frank), David, Georgia, serif;
+  --sans: var(--font-assistant), "Helvetica Neue", Arial, sans-serif;
+
+  --pad: 18px;
+  --gap: 14px;
+  --maxw: 1240px;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (min-width: 640px) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --pad: 28px;
+    --gap: 22px;
   }
 }
 
-html {
-  height: 100%;
-}
-
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
-  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
   margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 a {
@@ -42,8 +59,31 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+button {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--umber);
+  outline-offset: 4px;
+  border-radius: 1px;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
   }
 }

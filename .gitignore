@@ -32,9 +32,17 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
+
+# All persistent state (PLAN.md §7): the SQLite file, the image tree, the
+# archived audio, and the raw digitization sessions. Never committed.
+/data/
+
+# Digitization working files, if staged outside /data
+/import/
 
 # typescript
 *.tsbuildinfo
