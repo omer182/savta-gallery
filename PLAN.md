@@ -68,10 +68,10 @@ deployment. "Savta" (סבתא) = grandmother.
   clear "processing" state while derivatives generate.
 - Admin can also: edit any painting, manage additional images per painting, reorder the
   gallery (`sort_order`), edit the About page, manage tags.
-- **Import review queue** (admin only) — one imported painting per screen: cropper with an
-  auto-suggested rectangle, audio player, editable Whisper transcript, metadata confirm,
-  Next. Processes the bulk-import backlog (§11) in a single pass instead of 500 trips
-  through the full editor. Reuses the add-flow cropper.
+- **Import review** (admin only) — two separate passes over the bulk-import backlog (§11),
+  because their throughput differs by orders of magnitude. **Crop pass:** a contact sheet of
+  auto-detected crop rectangles, confidence-sorted, bulk-approvable. **Story pass:**
+  sequential, audio + editable transcript, one painting per screen.
 - **PWA** — installable to iPhone home screen with a custom icon (a crop of one of her
   paintings); opens to `/admin/add` when a logged-in artist launches it.
 
@@ -233,7 +233,7 @@ crop is optional for those.
 **The bulk import differs deliberately** (§11). The web flow crops *before* upload, to save
 her phone's bandwidth, so the uncropped frame never exists on the server. The CLI import
 has the full frames on disk already, so it **stores them uncropped** and the crop is applied
-later in `/admin/import-review`. That makes the crop **non-destructive for the imported 500**
+later in the crop pass (`/admin/import/crop`). That makes the crop **non-destructive for the imported 500**
 — the full frame, sticky note and all, is retained and any painting can be re-cropped at
 any time.
 
@@ -288,7 +288,7 @@ Notes:
 - `audio_path` points at the archived recording of her telling that painting's story
   (§11). Not published in v1; the story text is what visitors read.
 - `needs_crop` / `needs_review` are set by the importer and cleared by
-  `/admin/import-review`, so the queue knows what is left.
+  the crop and story passes respectively, so each knows what is left.
 - `title_en` / `story_en` are nullable and unused in v1. They exist now purely so adding an
   English version later is not a migration. Whether English is wanted at all: §12.
 
@@ -314,8 +314,9 @@ Notes:
 - `/admin/add` — the grandmother flow (both roles)
 - `/admin/paintings/[id]` — edit painting, manage images, publish / hide / delete
   (delete: admin only)
-- `/admin/import-review` — crop + audio + transcript review for imported paintings
-  (admin only, §11)
+- `/admin/import/crop` — contact sheet of auto-detected crops, confidence-sorted,
+  bulk-approvable (admin only, §11)
+- `/admin/import/stories` — sequential audio + transcript review (admin only, §11)
 - `/admin/about` — edit about page
 - `/login` — single password field (password → role); redirects to `/admin/add` for
   `artist`, `/admin` for `admin`
@@ -403,7 +404,7 @@ archive is considered "live" (see §10).
    hide / delete, about editor, tag management.
 6b. **Bulk import** (§11) — `npm run import` CLI: reads the session manifest, clusters
    photos by EXIF gap, reuses the step-3 `processImage()` path, runs Whisper over the
-   memos; plus the `/admin/import-review` queue. Slots in here, but **the photography
+   memos; plus the two `/admin/import/*` review passes. Slots in here, but **the photography
    itself must not wait for it** — see §11.
 7. **Search** — FTS5 + the dedicated `/search` page (live results, field keeps focus).
 8. **PWA** — `manifest.json` (`start_url: "/"`, `display: "standalone"`, name "Bluma"),
@@ -596,7 +597,7 @@ The importer reads EXIF `DateTimeOriginal` for clustering, so the photos must ar
 metadata intact — transfer them with **Image Capture / AirDrop originals**, not via a route
 that re-encodes or strips EXIF.
 
-The system is self-checking: `/admin/import-review` shows the **uncropped** photo, sticky
+The system is self-checking: the crop pass shows the **uncropped** photo, sticky
 note and all, beside the manifest row — so any drift is visible on the very next painting.
 
 Two free habits that make it bulletproof: **never delete photos on the phone mid-session**
@@ -620,7 +621,7 @@ process that writes must be on the box that owns the file.
 | Fill `manifest.csv` | Mac | Paste transcripts beside the rows typed live in the session |
 | Copy session folder to the server | — | Into `<stack-dir>/data/import/<date>/`; no new mount, `./data:/data` already exists |
 | Run the importer | **Home server** | Writes rows + sharp derivatives directly into `/data` |
-| Crop + fix transcripts | Browser | `/admin/import-review`, from anywhere |
+| Crop, then fix transcripts | Browser | `/admin/import/crop` then `/admin/import/stories` |
 
 Run it from **Portainer → Containers → savta-gallary → Console**:
 
@@ -644,7 +645,7 @@ web upload path.** The two flows are not symmetrical:
 
 So at import the script only: stores the original untouched, reads intrinsic dimensions and
 EXIF, and flags `needs_crop`. **Derivatives, thumbhash and metadata-stripping run after the
-crop is confirmed** in `/admin/import-review`. The crop is therefore applied **server-side
+crop is confirmed** in the crop pass. The crop is therefore applied **server-side
 with sharp** (`extract` on the stored original) — the review queue reuses the add-flow
 cropper's *UI*, not its client-side application.
 
@@ -653,7 +654,7 @@ always possible (§4).
 
 **Primary image.** A cluster holds 2–3 frames of one painting. The importer marks the
 **first** frame `is_primary` and the rest as additional images in shooting order;
-`/admin/import-review` allows switching. Extra shots (signature, inscription on the back,
+the crop pass allows switching. Extra shots (signature, inscription on the back,
 frame, texture) must be taken **immediately after** the main frames — pause more than ~30
 seconds and the EXIF clustering reads them as a separate painting.
 
@@ -662,25 +663,40 @@ cluster count vs. manifest row count, any cluster whose frame count looks anomal
 near the 30-second threshold, photos missing EXIF timestamps, and the proposed row↔cluster
 pairing. "Validate on session one" (above) means running this and reading it.
 
-Once `/admin/import-review` is done, the staging folder is redundant — every original has
+Once the crop pass is done, the staging folder is redundant — every original has
 already been copied into `/data/images/originals` — so delete it to reclaim the space.
 Budget roughly **8–10 GB** in `/data` for 500 paintings at 3 frames each, originals plus
 derivatives.
 
-### `/admin/import-review` — one screen, one pass
+### Reviewing 500 imports — two passes, not one
 
-Per painting, all in one view:
+Cropping and transcript correction must **not** share a screen. Their throughput differs by
+two orders of magnitude: a crop is a one-second glance that is right ~90% of the time, a
+transcript is a two-minute listen-and-fix needed every time. Combining them forces the
+two-minute task 500 times in order to do the one-second task 500 times, and makes
+bulk-approving crops impossible.
 
-- the photo with a **cropper** (auto-suggested rectangle from edge detection)
-- an **audio player** with her recording
-- the **Whisper transcript, editable**, beside it
-- title / year / dimensions to confirm
-- **Next**
+**Auto-detection does most of pass 1.** Conditions are near-ideal for it: an axis-aligned
+painting on a tripod against a uniform mid-grey matte sheet. No OpenCV needed — downscale
+to ~400px, read grayscale pixels via sharp, and build a **projection profile** (per row and
+column, how far it deviates from the backdrop). The painting is a sharp contiguous run on
+both axes; take the bounding box plus slight padding. It also yields a **confidence score**
+from edge crispness.
 
-This replaces a standalone crop queue — cropping, transcript correction and confirmation
-all happen in a single pass rather than three. It is pleasant work (listening to her while
-tidying text) and it is where her rambling becomes a story. Clears `needs_crop` and
-`needs_review`; publishing stays a separate deliberate act.
+**Pass 1 — crop (contact sheet, ~30 minutes for 500).**
+A grid of ~40 per page, each thumbnail showing the photo with its proposed rectangle drawn
+on, **sorted lowest-confidence first** so the problems surface at the top. Fix those, scan
+the rest, "approve remaining on this page". Tapping a thumbnail opens the full cropper.
+~500 decisions collapse to ~30. Best on a laptop. Clears `needs_crop` and **is the gate
+that triggers derivative generation**.
+
+**Pass 2 — stories (sequential, spread over weeks).**
+One painting per screen: audio player, editable Whisper transcript, metadata to confirm,
+Next. Slow and pleasant — this is where her rambling becomes a story. Clears
+`needs_review`. Because it only edits text, it blocks nothing: **the gallery can go live
+after pass 1, with stories filling in gradually.**
+
+Publishing stays a separate deliberate act in both cases.
 
 ---
 
@@ -718,7 +734,7 @@ tidying text) and it is where her rambling becomes a story. Clears `needs_crop` 
   column (artist / sold / gifted / unknown) is captured at the same time — cheap now,
   painful to retrofit. Full protocol in §11.
 - Capture split: **facts typed live, story always recorded** (one memo per painting),
-  transcribed with local Whisper, corrected in `/admin/import-review`. Photos matched to
+  transcribed with local Whisper, corrected in the story pass. Photos matched to
   rows by EXIF gap clustering, verified by the in-frame sticky note.
 - **The site is entirely in Hebrew** — content and chrome, RTL throughout. This retires
   Cormorant Garamond and Karla (no Hebrew glyphs) in favour of **Frank Ruhl Libre +

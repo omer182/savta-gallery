@@ -1,57 +1,70 @@
 # CLAUDE.md — Savta Gallery
 
-Public museum-style gallery + phone-friendly admin for my grandmother's 50+ years of
-paintings. Full spec: **[PLAN.md](PLAN.md)**. Visual prototype: **`gallery-mock.jsx`**
-(static, throwaway — real app is Next.js).
+Public museum-style gallery + phone-friendly admin for Bluma Swhartzberg Kamin's 50+ years
+of paintings. Full spec: **[PLAN.md](PLAN.md)**.
+
+Visual target: the **Hebrew RTL mock** —
+`https://claude.ai/code/artifact/f0b95667-9775-4d42-a7cb-286ecbb48017`.
+(`gallery-mock.jsx` was the original English prototype and is superseded.)
 
 ## What this is
 
-- **Public**: masonry gallery, per-painting page with a long story, About, hidden search,
-  tag chips. Published paintings only.
+- **Public**: masonry gallery, per-painting page with her story set large, About page,
+  `/search` as its own page, scrolling tag strip. Published paintings only, ~48/page.
 - **Admin**: two users — `admin` (full) and `artist` (grandmother; no publish, no delete).
-  No dashboard, no giant button: a logged-in artist just gets an `ADD PAINTING` item in
-  the normal site topbar (`admin` also gets `MANAGE` → `/admin`). Admin screens stay in
-  the site's design system — warm paper, serif — just single-column and finger-friendly.
+  No dashboard, no giant button: a logged-in artist gets one extra nav item, `הוספת ציור`
+  (`admin` also gets `ניהול` → `/admin`). Admin screens stay inside the site's design
+  system — warm paper, serif — just single-column and finger-friendly.
 - **"Add a painting" is the core flow**: pick photo → **full-screen crop** (drop the wall)
-  → fields → Save as draft. Autosave to localStorage, client-side HEIC→JPEG + resize,
-  progress bar.
+  → fields → save as draft. Autosave to localStorage, client-side HEIC→JPEG + resize,
+  background upload that starts at crop-confirm so saving feels instant.
 - Login: one `/login` field — the password picks the role (argon2id env-var hashes,
-  HMAC httpOnly cookie, 365-day rolling for artist / 30-day admin, rate-limited). PLAN.md §3.
-- Gallery/tag/search views are **paginated** (~48/page, up to ~500 paintings).
+  HMAC httpOnly cookie, 365-day rolling for artist / 30-day admin, rate-limited). §3.
 
 ## Stack
 
-Next.js (App Router) · SQLite + Drizzle + FTS5 · local FS image storage · sharp
-derivatives (AVIF/WebP 400/800/1600/2400 + JPEG 1600) · thumbhash blur-up ·
-hand-rolled cookie auth (argon2id hashes, single-field password → role) · GitHub Actions builds & pushes the image to
-**GHCR** on push to `main`; Portainer stack **pulls the pre-built image** (`Pull and
-redeploy`), no build on the server — same pattern as the sibling `storytime` repo ·
-containerised Linux home server alongside Plex/*arr · `web` on `127.0.0.1:3006` · domain
-`bluma.omersher.com`, nginx + Cloudflare owned by the user. State = `/data` (db file +
-images); off-site backup deferred.
+Next.js 16 (App Router, TS, **no Tailwind** — the design system is bespoke CSS) · SQLite +
+Drizzle + FTS5 · local FS image storage · sharp derivatives (AVIF/WebP 400/800/1600/2400 +
+JPEG 1600) · thumbhash blur-up · hand-rolled cookie auth.
+
+Deploy: GitHub Actions builds and pushes to **GHCR** on push to `main`; the Portainer stack
+**pulls the pre-built image** (no build on the server) — same pattern as the sibling
+`storytime` repo. `web` on `127.0.0.1:3006`, domain `bluma.omersher.com`, nginx +
+Cloudflare owned by the user. All state is `/data` (db + images); off-site backup deferred.
 
 ## Non-negotiables
 
-- Design system in PLAN.md §2 is **locked**. Warm paper `#F7F4EE`, ink `#1C1A15`,
-  Cormorant Garamond for display, Karla for UI. The site disappears; paintings are the
-  design. Never crop paintings to uniform aspect ratios.
-- Never modify original uploads. Strip EXIF from public derivatives.
-- `dir="auto"` on all user-entered text (Hebrew / RTL expected).
+- Design system in PLAN.md §2 is **locked**. Warm paper `#F7F4EE`, ink `#1C1A15`, umber
+  `#6E5A3A`. The site disappears; the paintings are the design.
+- **The whole site is Hebrew and RTL** — chrome included, not just content. Type is
+  **Frank Ruhl Libre** (display + story) and **Assistant** (UI). Cormorant Garamond and
+  Karla are **retired**: neither ships Hebrew glyphs. Hebrew has no uppercase, so build
+  label hierarchy from size/weight/colour, and cap tracking at ~`.02em`.
+- Use **logical CSS properties** (`inset-inline-start`, `padding-inline`, `text-align:
+  start/end`). Nothing pinned to a physical side. `dir="auto"` on user-entered text.
+- Masonry is **CSS Grid row-spans**, never `columns` — `columns` fills column-by-column and
+  scrambles `sort_order`. 2 cols on phones, 3 from 640px.
+- The placard must be **visible without hover on touch screens**; it is the signature
+  element and the phone is the primary surface.
+- Grid cards are real `<a href>` — keyboard reachable, crawlable, visible focus ring.
+- Never modify a stored original. Strip metadata from public derivatives.
+- Content-hashed derivative URLs → `Cache-Control: immutable`. Admin + API routes uncached.
 - Respect `prefers-reduced-motion`. Responsive to 360px.
 - Nothing the `artist` role does can break the public site or lose typed text.
-- Content-hashed derivative URLs → `Cache-Control: immutable`. Admin + API routes uncached.
 
 ## Digitization
 
-~500 paintings get photographed at her house and bulk-imported once, via a CLI script +
-an `/admin/import-review` queue — **not** a shipped batch-upload UI. Facts are typed live;
-her **stories are always recorded** (one memo per painting) and transcribed with local
-Whisper, then corrected by hand. Photos match rows by EXIF-gap clustering, verified by a
-numbered sticky note visible in every frame. Protocol, kit, import format: PLAN.md §11.
-The photography does not wait for the software.
+~500 paintings photographed at her house and bulk-imported once, via a CLI script plus two
+`/admin/import/*` review passes — **not** a shipped batch-upload UI. Facts typed live; her
+**stories are always recorded** (one memo per painting), transcribed with Whisper **on the
+Mac**, corrected by hand. Photos match rows by EXIF-gap clustering, verified by a numbered
+sticky note visible in every frame. Shoot **JPEG, not HEIC** — sharp cannot decode HEIC and
+the importer has no browser to convert in.
 
-Content will be **Hebrew** — `dir="auto"` everywhere, Frank Ruhl Libre paired with
-Cormorant. Whether the site is Hebrew-only or bilingual is still open (PLAN.md §12).
+The importer runs **on the home server** (SQLite over a network share corrupts), and
+**defers derivative generation until after the crop pass** — imported photos still contain
+wall and sticky note. Protocol, kit, import format: PLAN.md §11. The photography does not
+wait for the software.
 
 ## Commands
 
@@ -59,15 +72,16 @@ Cormorant. Whether the site is Hebrew-only or bilingual is still open (PLAN.md �
 
 ## Status
 
-**Build step 1 (scaffold) done.** Next.js 16 (App Router, TS, no Tailwind — the design
-system is bespoke CSS), Drizzle + better-sqlite3, schema + migrations + Hebrew seed data,
-RTL root layout with self-hosted Frank Ruhl Libre + Assistant. Build/lint/typecheck green.
+**Build step 1 (scaffold) done.** Drizzle schema + migrations + FTS5 triggers + Hebrew seed
+data, RTL root layout with self-hosted fonts. Build/lint/typecheck green.
 
-Notes for whoever picks this up:
-- **better-sqlite3 is pinned to `^12`** — v13.0.3's Windows prebuild segfaults on Node 22.
-- Public pages are `force-dynamic` for now. **Step 2 should move them to ISR +
-  `revalidatePath()` on publish**, which is what §9 wants behind Cloudflare.
-- `outputFileTracingExcludes` keeps `./data` out of the standalone build; without it the
-  dev DB is baked into the image and shadows the `/data` mount.
+Gotchas worth keeping:
+- **better-sqlite3 is pinned to `^12`** — v13.0.3's Windows prebuild segfaults on Node 22
+  despite declaring `engines: node >=22`.
+- Public pages are `force-dynamic`. **Step 2 should move them to ISR + `revalidatePath()`
+  on publish**, which is what §9 wants behind Cloudflare.
+- `outputFileTracingExcludes` keeps `./data` out of `.next/standalone`; without it the dev
+  DB is baked into the image and shadows the `/data` mount.
+- FTS5 tokenizes Hebrew correctly (word, prefix, phrase) — verified, not assumed.
 
 Next: build step 2 — the public gallery, matching the RTL mock. PLAN.md §8.
