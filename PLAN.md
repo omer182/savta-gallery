@@ -237,6 +237,10 @@ later in `/admin/import-review`. That makes the crop **non-destructive for the i
 — the full frame, sticky note and all, is retained and any painting can be re-cropped at
 any time.
 
+Consequently **the import path must defer steps 3–5 above** (derivatives, thumbhash,
+metadata-stripping) until after that crop is confirmed. Running them at import time would
+produce derivatives of the uncropped frame, sticky note included. See §11.
+
 ---
 
 ## 5. Data Model
@@ -542,7 +546,9 @@ straighten the painting — not the camera.
   reversible and a re-shoot is not, and the note gets cropped away with the margin.
 - 2–3 frames each. Blur is invisible on a phone and obvious at 2400px.
 - Tap-and-hold to lock AE/AF; shoot on a 2s timer.
-- Also capture: signature, any inscription on the back, the frame, a texture close-up.
+- Also capture: signature, any inscription on the back, the frame, a texture close-up —
+  **immediately after** the main frames, without pausing. The importer groups photos by
+  time gap, so a pause longer than ~30 seconds turns the extras into a phantom painting.
 - One test shot at the start of every session and after every tripod move — zoom fully in
   to check it is actually sharp.
 
@@ -625,12 +631,41 @@ node scripts/import.mjs /data/import/2026-09-06
 The script is shipped in the image as plain JS (the standalone build has no `tsx`), so the
 Dockerfile must copy it explicitly — `.next/standalone` will not include it otherwise.
 
-It walks the manifest and **calls the same `processImage()` used by the web upload
-endpoint** — one code path for derivatives, thumbhash and EXIF. Everything lands as
-`status='draft'`, `needs_crop=true`, `needs_review=true`.
+Everything lands as `status='draft'`, `needs_crop=true`, `needs_review=true`.
+
+**Derivative generation is deferred — this is the one place the import must NOT reuse the
+web upload path.** The two flows are not symmetrical:
+
+- *Web:* she crops on the phone, uploads an already-cropped image, derivatives follow.
+- *Import:* photos arrive **uncropped**, with wall, floor and a numbered sticky note in
+  frame. Generating derivatives here would build ~4,500 files of a sticky note — and if
+  anything later failed to regenerate them, **the public gallery would ship photographs of
+  her paintings with sticky notes taped beside them.**
+
+So at import the script only: stores the original untouched, reads intrinsic dimensions and
+EXIF, and flags `needs_crop`. **Derivatives, thumbhash and metadata-stripping run after the
+crop is confirmed** in `/admin/import-review`. The crop is therefore applied **server-side
+with sharp** (`extract` on the stored original) — the review queue reuses the add-flow
+cropper's *UI*, not its client-side application.
+
+Because the stored original stays uncropped, re-cropping any imported painting later is
+always possible (§4).
+
+**Primary image.** A cluster holds 2–3 frames of one painting. The importer marks the
+**first** frame `is_primary` and the rest as additional images in shooting order;
+`/admin/import-review` allows switching. Extra shots (signature, inscription on the back,
+frame, texture) must be taken **immediately after** the main frames — pause more than ~30
+seconds and the EXIF clustering reads them as a separate painting.
+
+**`--dry-run` is mandatory before the first real import.** It reports, writing nothing:
+cluster count vs. manifest row count, any cluster whose frame count looks anomalous, gaps
+near the 30-second threshold, photos missing EXIF timestamps, and the proposed row↔cluster
+pairing. "Validate on session one" (above) means running this and reading it.
 
 Once `/admin/import-review` is done, the staging folder is redundant — every original has
 already been copied into `/data/images/originals` — so delete it to reclaim the space.
+Budget roughly **8–10 GB** in `/data` for 500 paintings at 3 frames each, originals plus
+derivatives.
 
 ### `/admin/import-review` — one screen, one pass
 
