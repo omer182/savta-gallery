@@ -78,6 +78,7 @@ export function AddFlow({
   const [newTag, setNewTag] = useState("");
   const [newMedium, setNewMedium] = useState("");
   const [showMediumInput, setShowMediumInput] = useState(false);
+  const [showTagInput, setShowTagInput] = useState(false);
   const [publishNow, setPublishNow] = useState(false);
 
   /* ---------- autosave: she must never lose typed text (§9) ---------- */
@@ -244,6 +245,10 @@ export function AddFlow({
   }
 
   /* ---------- tags & technique ---------- */
+  /**
+   * Unlike technique, the input stays open after adding: a painting takes
+   * several tags, so she can type them one after another without reopening.
+   */
   async function addTag() {
     const name = newTag.trim();
     if (!name) return;
@@ -561,8 +566,17 @@ export function AddFlow({
                   {t}
                 </button>
               ))}
+              {isAdmin && (
+                <button
+                  type="button"
+                  className={a.chip}
+                  onClick={() => setShowTagInput((v) => !v)}
+                >
+                  + תגית חדשה
+                </button>
+              )}
             </div>
-            {isAdmin && (
+            {isAdmin && showTagInput && (
               <div className={a.row} style={{ marginTop: 12 }}>
                 <input
                   className={a.input}
@@ -576,6 +590,7 @@ export function AddFlow({
                     }
                   }}
                   dir="auto"
+                  autoFocus
                 />
                 <button type="button" className={s.inlineBtn} onClick={() => void addTag()}>
                   הוספה
