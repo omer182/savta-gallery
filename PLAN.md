@@ -563,39 +563,50 @@ in §7, and these are the only files in the project that genuinely cannot be rec
 
 ### Import mechanism
 
-Typed live in the session (no `story` column — that comes from the audio):
+Typed live in the session. `num` is the sticky-note number and is the join key;
+`story` stays blank here — it comes from the recording during the story pass:
 
 ```
-num | title | year | medium | width_cm | height_cm | tags | provenance | notes
+num | title | year | medium | width_cm | height_cm | tags | provenance | story
 ```
 
-**Matching photos to rows — two layers, only the first needs any effort.**
+**Matching photos to rows — by file number (preferred).**
 
-*The link* is the numbered sticky note visible in every frame. Human-readable, survives
-everything, needs no filename tracking.
-
-*The mechanism* is EXIF timestamp clustering, done by the importer. Frames of the same
-painting are 2–5 seconds apart; consecutive paintings are separated by a swap, a dust, a
-typed row and a recorded story — a minute or more. So **any gap over ~30 seconds starts a
-new painting**. That yields ordered groups that pair 1:1 with the ordered manifest rows and
-the chronologically-sorted audio memos. Photos go in flat, straight off the phone, never
-renamed or foldered.
+Photos are renamed to their sticky-note number after the session — `1.jpg`, `2.jpg`, and
+`3b.jpg` for a second frame of painting 3 — and the manifest carries a matching `num`
+column. The importer pairs on **the number, not the order**, which is what makes it safe:
+a missing photo or a missing row is named precisely rather than silently shifting every
+painting after it by one.
 
 ```
 data/import/2026-09-06/
-  manifest.csv
-  photos/          flat, in shooting order, JPEG (see Kit)
-    IMG_0041.JPG   10:14:02  ┐
-    IMG_0042.JPG   10:14:05  ├─ painting 1
-    IMG_0043.JPG   10:14:07  ┘
-    IMG_0051.JPG   10:16:40  ┐  ← 2½ min gap = new painting
-    IMG_0052.JPG   10:16:43  ┘
-  audio/           one memo per painting, chronological
+  manifest.csv     num,title,year,medium,width_cm,height_cm,tags,provenance,story
+  photos/
+    1.jpg          painting 1
+    2.jpg          painting 2
+    3.jpg   ┐      painting 3 — leading digits are the number, so any
+    3b.jpg  ┘      suffix marks an extra frame of the same painting
+  audio/
+    3.m4a          matched by number too
 ```
 
-The importer reads EXIF `DateTimeOriginal` for clustering, so the photos must arrive with
-metadata intact — transfer them with **Image Capture / AirDrop originals**, not via a route
-that re-encodes or strips EXIF.
+Accepted number columns: `num`, `number`, `pic`, `pic_number`, `photo`, `id`, `מספר`.
+Everything else in the row is optional; a blank `story` is expected at this stage, since it
+comes from the recording during the story pass.
+
+The importer reports mismatches before writing anything, e.g.:
+
+```
+!  1 manifest row(s) with NO photo: 7
+!  1 photo group(s) with NO manifest row: 9
+```
+
+**Fallback: EXIF timestamp clustering** (`--mode exif`, and used automatically when the
+photos are not numbered). Frames of one painting are 2–5 seconds apart while consecutive
+paintings are separated by a swap, a dust, a typed row and a recorded story — so any gap
+over ~30s starts a new painting. This pairs by **order**, so one bad gap misaligns
+everything downstream, and it needs EXIF intact: transfer with **Image Capture / AirDrop
+originals**, never a route that re-encodes or strips metadata. Prefer numbering.
 
 The system is self-checking: the crop pass shows the **uncropped** photo, sticky
 note and all, beside the manifest row — so any drift is visible on the very next painting.
