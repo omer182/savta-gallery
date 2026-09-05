@@ -43,6 +43,20 @@ export default function LoginPage() {
         setBusy(false);
         return;
       }
+      // The login succeeded, but that only means the server SENT a cookie.
+      // Confirm the browser actually stored and returned it before navigating:
+      // otherwise middleware bounces the next request back here and the whole
+      // thing looks like the button doing nothing.
+      const check = await fetch("/api/auth/session", { cache: "no-store" });
+      const who = (await check.json().catch(() => ({ role: null }))) as {
+        role: string | null;
+      };
+      if (!who.role) {
+        setError("הדפדפן לא שמר את העוגייה. בדקו שחסימת עוגיות אינה פעילה ונסו שוב.");
+        setBusy(false);
+        return;
+      }
+
       const requested = new URLSearchParams(window.location.search).get("next");
       const target = requested?.startsWith("/") ? requested : (data.next ?? "/admin/add");
 

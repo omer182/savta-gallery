@@ -267,11 +267,25 @@
   color: var(--ink);
   border-bottom-color: var(--ink);
 }
+/*
+ * Pinned to the viewport, so it is on screen without scrolling to the end of
+ * a long gallery. Kept slim for the same reason — a permanently visible band
+ * is height the paintings do not get.
+ *
+ * No body padding is needed to clear it: every page that renders this footer
+ * already ends with 70–80px of bottom padding.
+ */
 .footer {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 20;
+  background: var(--paper);
   border-top: 1px solid var(--line);
-  padding: 24px var(--pad) 30px;
+  padding: 11px var(--pad);
+  padding-bottom: calc(11px + env(safe-area-inset-bottom, 0px));
   text-align: center;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 300;
   color: var(--muted-lt);
 }
@@ -290,3 +304,4 @@
   color: var(--ink-soft);
   border-bottom-color: var(--line);
 }
+
