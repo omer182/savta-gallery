@@ -139,16 +139,34 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+/*
+ * Visibility must NEVER depend on JavaScript.
+ *
+ * This was previously opacity:0 until an IntersectionObserver added a class,
+ * which deadlocked on phones: a card has no height until the row-span pass
+ * runs, and a zero-height element may never report as intersecting, so it was
+ * never revealed — an entirely blank gallery with the images serving fine.
+ *
+ * A plain CSS animation with fill-mode `both` ends visible on its own, so the
+ * worst case is "no animation", never "no gallery".
+ */
 .card {
   display: block;
-  opacity: 0;
-  transform: translateY(16px);
+  /* Fallback height until the row-span pass measures the real one; without it
+     grid-auto-rows:4px collapses every unmeasured card to 4px. */
+  grid-row: span 60;
+  animation: cardRise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 55ms);
 }
-.cardIn {
-  opacity: 1;
-  transform: none;
-  transition: opacity 0.55s cubic-bezier(0.2, 0.8, 0.2, 1),
-    transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+@keyframes cardRise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 .cardInner {
   display: block;
@@ -260,7 +278,15 @@
 
 @media (prefers-reduced-motion: reduce) {
   .card {
-    opacity: 1;
-    transform: none;
+    animation: none;
   }
+}
+
+.footerLink {
+  color: var(--muted-lt);
+  border-bottom: 1px solid transparent;
+}
+.footerLink:hover {
+  color: var(--ink-soft);
+  border-bottom-color: var(--line);
 }

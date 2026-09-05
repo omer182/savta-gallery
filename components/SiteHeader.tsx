@@ -56,10 +56,24 @@ export async function SiteHeader({ current, count }: { current?: string; count?:
   );
 }
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const session = await getSession();
+
   return (
     <footer className={s.footer}>
       © {new Date().getFullYear()} {ARTIST_NAME} · כל הציורים נותרים ברשות האמנית
+      {/* Deliberately in the footer, not the nav: this is a public gallery, and
+          a "log in" next to גלריה/אודות would read as an app. Quiet enough that
+          a visitor never notices it, findable enough that she is not typing a
+          URL from memory on a phone. */}
+      {!session && (
+        <>
+          {" · "}
+          <Link href="/login" className={s.footerLink}>
+            כניסה
+          </Link>
+        </>
+      )}
     </footer>
   );
 }

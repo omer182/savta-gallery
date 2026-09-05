@@ -59,35 +59,14 @@ export function Masonry({ children }: { children: ReactNode }) {
   );
 }
 
-/** Staggered entry, triggered by viewport so "load more" pages animate too. */
+/**
+ * Carries the stagger index only. The entry animation itself is pure CSS, so a
+ * card is visible whether or not this component's JavaScript ever runs — see
+ * the note on .card in gallery.module.css.
+ */
 export function Reveal({ children, index }: { children: ReactNode; index: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      el.classList.add(s.cardIn);
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries, obs) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            (e.target as HTMLElement).style.transitionDelay = `${(index % 12) * 55}ms`;
-            e.target.classList.add(s.cardIn);
-            obs.unobserve(e.target);
-          }
-        }
-      },
-      { rootMargin: "80px" },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [index]);
-
   return (
-    <div className={s.card} ref={ref}>
+    <div className={s.card} style={{ "--i": index % 12 } as React.CSSProperties}>
       {children}
     </div>
   );
