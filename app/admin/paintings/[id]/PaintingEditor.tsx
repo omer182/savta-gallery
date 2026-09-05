@@ -122,7 +122,21 @@ export function PaintingEditor({
           status,
         }),
       });
-      setMsg(res.ok ? "נשמר." : "השמירה נכשלה.");
+      if (!res.ok) {
+        setMsg("השמירה נכשלה.");
+        return;
+      }
+
+      // Publishing is the end of this painting's job, so hand back to the list
+      // rather than leaving her on a page she is finished with. Any other save
+      // stays put, because it is usually one of several edits in a row.
+      if (status === "published" && painting.status !== "published") {
+        router.push("/admin");
+        router.refresh();
+        return;
+      }
+
+      setMsg("נשמר.");
       router.refresh();
     } catch {
       setMsg("השמירה נכשלה.");

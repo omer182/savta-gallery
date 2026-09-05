@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { permanentRedirect } from "next/navigation";
 import { notFound } from "next/navigation";
+import { asc, isNotNull } from "drizzle-orm";
+import { PaintingEditor } from "@/app/admin/paintings/[id]/PaintingEditor";
+import { db, paintings as paintingsTable, tags as tagsTable } from "@/db";
 import { BlurImage } from "@/components/BlurImage";
+import { InlineAdmin } from "@/components/InlineAdmin";
+import { getSession } from "@/lib/auth";
 import g from "@/components/gallery.module.css";
 import { Placard } from "@/components/Placard";
 import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
@@ -12,7 +17,13 @@ import { paintingHref, paintingSlug, publicIdFromSlug } from "@/lib/slug";
 import { thumbhashDataUrl } from "@/lib/thumb";
 import s from "./page.module.css";
 
-export const revalidate = 3600;
+/**
+ * Must never be cached: this page now renders admin-only content, including the
+ * PRIVATE provenance field (§5). A cached copy produced for an admin could
+ * otherwise be served to an anonymous visitor. Reading cookies already forces
+ * dynamic rendering, but that is too important to leave implicit.
+ */
+export const dynamic = "force-dynamic";
 
 /** A stray "%" in a title would make decodeURIComponent throw. */
 function safeDecode(s: string): string {
@@ -23,9 +34,9 @@ function safeDecode(s: string): string {
   }
 }
 
-function load(slugParam: string) {
+function load(slugParam: string, includeUnpublished = false) {
   const publicId = publicIdFromSlug(slugParam);
-  const painting = getPaintingByPublicId(publicId);
+  const painting = getPaintingByPublicId(publicId, includeUnpublished);
   return { publicId, painting };
 }
 
@@ -54,7 +65,12 @@ export async function generateMetadata({
 
 export default async function PaintingPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const { painting } = load(slug);
+  const session = await getSession();
+  const isAdmin = session?.role === "admin";
+
+  // An admin may open an unpublished painting here — otherwise unpublishing
+  // from this page would 404 it out from under them on the very next render.
+  const { painting } = load(slug, isAdmin);
   if (!painting) notFound();
 
   // The Hebrew tail is cosmetic; the id is the identity. A stale or missing tail
@@ -78,6 +94,28 @@ export default async function PaintingPage({ params }: { params: Promise<{ slug:
     painting.widthCm && painting.heightCm ? painting.heightCm / painting.widthCm : 1;
 
   const paragraphs = (painting.story ?? "").split(/\n{2,}/).filter((p) => p.trim());
+
+  // Only queried for the admin panel, so a visitor's render does no extra work.
+  const allTags = isAdmin
+    ? db.select({ name: tagsTable.name }).from(tagsTable).orderBy(asc(tagsTable.name)).all()
+    : [];
+  const allMedia = isAdmin
+    ? Array.from(
+        new Set([
+          "שמן על בד",
+          "שמן על לוח",
+          "אקוורל",
+          "רישום",
+          ...db
+            .selectDistinct({ medium: paintingsTable.medium })
+            .from(paintingsTable)
+            .where(isNotNull(paintingsTable.medium))
+            .all()
+            .map((m) => m.medium)
+            .filter((m): m is string => !!m),
+        ]),
+      )
+    : [];
 
   return (
     <>
@@ -170,6 +208,27 @@ export default async function PaintingPage({ params }: { params: Promise<{ slug:
                 </p>
               ))}
             </div>
+          )}
+
+          {isAdmin && (
+            <InlineAdmin status={painting.status}>
+              <PaintingEditor
+                painting={{
+                  id: painting.id,
+                  title: painting.title,
+                  year: painting.year,
+                  medium: painting.medium,
+                  widthCm: painting.widthCm,
+                  heightCm: painting.heightCm,
+                  story: painting.story,
+                  status: painting.status,
+                  provenance: painting.provenance,
+                }}
+                tagNames={tags.map((t) => t.name)}
+                allTags={allTags.map((t) => t.name)}
+                allMedia={allMedia}
+              />
+            </InlineAdmin>
           )}
 
           <div className={s.pager}>

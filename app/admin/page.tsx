@@ -77,7 +77,7 @@ export default async function AdminHome() {
       <ul className={a.list}>
         {rows.map((p) => (
           <li key={p.id} className={a.listItem}>
-            <div className={a.listThumb}>
+            <Link href={`/admin/paintings/${p.id}`} className={a.listThumb}>
               {p.derivedHash ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -97,7 +97,7 @@ export default async function AdminHome() {
               ) : (
                 <div style={{ aspectRatio: "1", background: "#efe9dc" }} />
               )}
-            </div>
+            </Link>
             <div className={a.listMain}>
               <div className={a.listTitle} dir="auto">
                 <Link href={`/admin/paintings/${p.id}`}>{p.title}</Link>
