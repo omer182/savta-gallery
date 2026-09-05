@@ -61,6 +61,7 @@ export function AddFlow({
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [croppedUrl, setCroppedUrl] = useState<string | null>(null);
   const fileRef = useRef<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
 
   const [crop, setCrop] = useState<Crop>();
@@ -131,6 +132,10 @@ export function AddFlow({
         return;
       }
     }
+
+    // Clearing the input lets her re-pick the same file later; without this the
+    // change event does not fire a second time for an identical selection.
+    e.target.value = "";
 
     fileRef.current = file;
     setCrop(undefined);
@@ -220,6 +225,22 @@ export function AddFlow({
     } catch {
       setUploadState("error");
     }
+  }
+
+  /** Opens the native picker straight away, rather than stepping back first. */
+  function pickAnother() {
+    fileInputRef.current?.click();
+  }
+
+  /** Abandons this photo entirely and returns to the start. Typed text is kept. */
+  function cancelCrop() {
+    if (fileUrl) URL.revokeObjectURL(fileUrl);
+    setFileUrl(null);
+    fileRef.current = null;
+    setCrop(undefined);
+    setPixelCrop(null);
+    setError(null);
+    setStep("photo");
   }
 
   /* ---------- tags & technique ---------- */
@@ -316,6 +337,16 @@ export function AddFlow({
 
   return (
     <div>
+      {/* One shared input: the picker label and "choose another" both use it. */}
+      <input
+        ref={fileInputRef}
+        id="photo-input"
+        type="file"
+        accept="image/*"
+        onChange={onPick}
+        hidden
+      />
+
       <div className={a.steps} aria-hidden>
         {[0, 1, 2].map((i) => (
           <div key={i} className={`${a.step} ${i <= stepIndex ? a.stepOn : ""}`} />
@@ -331,8 +362,7 @@ export function AddFlow({
           {restored && (
             <div className={a.note}>יש טיוטה שמורה מפעם קודמת — הטקסט שכתבת מחכה לך במסך הבא.</div>
           )}
-          <label className={s.picker}>
-            <input type="file" accept="image/*" onChange={onPick} hidden />
+          <label className={s.picker} htmlFor="photo-input">
             <span className={s.pickerIcon}>+</span>
             <span>בחרי תמונה</span>
           </label>
@@ -372,14 +402,14 @@ export function AddFlow({
           <button className={a.btn} onClick={confirmCrop} type="button">
             המשך
           </button>
-          <button
-            className={`${a.btn} ${a.btnQuiet}`}
-            style={{ marginTop: 10 }}
-            onClick={() => setStep("photo")}
-            type="button"
-          >
-            בחירת תמונה אחרת
-          </button>
+          <div className={s.cropActions}>
+            <button className={`${a.btn} ${a.btnQuiet}`} onClick={pickAnother} type="button">
+              בחירת תמונה אחרת
+            </button>
+            <button className={`${a.btn} ${a.btnQuiet}`} onClick={cancelCrop} type="button">
+              ביטול
+            </button>
+          </div>
         </>
       )}
 
@@ -565,17 +595,16 @@ export function AddFlow({
             </label>
           )}
 
-          <button className={a.btn} onClick={save} disabled={saving} type="button">
-            {saving ? "שומר…" : publishNow && isAdmin ? "שמירה ופרסום" : "שמירה"}
-          </button>
-          <button
-            className={`${a.btn} ${a.btnQuiet}`}
-            style={{ marginTop: 10 }}
-            onClick={() => setStep("crop")}
-            type="button"
-          >
-            → חזרה לחיתוך
-          </button>
+          {/* Sticky: the form is long enough that the save button scrolled off
+              the bottom of a phone screen and looked as though it did not exist. */}
+          <div className={s.saveBar}>
+            <button className={a.btn} onClick={save} disabled={saving} type="button">
+              {saving ? "שומר…" : publishNow && isAdmin ? "שמירה ופרסום" : "שמירה"}
+            </button>
+            <button className={s.saveBarBack} onClick={() => setStep("crop")} type="button">
+              → חזרה לחיתוך
+            </button>
+          </div>
         </>
       )}
 

@@ -123,3 +123,40 @@
   height: 20px;
   accent-color: var(--ink);
 }
+
+/* Two equal secondary actions under the crop: swap the photo, or back out. */
+.cropActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+@media (max-width: 460px) {
+  .cropActions {
+    flex-direction: column;
+  }
+}
+
+/* The details form is long — title, dimensions, technique, story, tags — so the
+   save button scrolled off the bottom and read as missing. Pinning it keeps the
+   primary action reachable at any scroll position. */
+.saveBar {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin-top: 30px;
+  padding-block: 14px;
+  padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  background: var(--paper);
+  border-top: 1px solid var(--line);
+}
+.saveBarBack {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--umber);
+}
+.saveBarBack:hover {
+  color: var(--ink);
+}
