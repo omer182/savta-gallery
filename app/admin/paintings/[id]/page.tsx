@@ -62,19 +62,15 @@ export default async function EditPainting({ params }: { params: Promise<{ id: s
               style={{ display: "block", width: "100%" }}
             />
           ) : (
-            <div
-              style={{
-                aspectRatio: "4 / 3",
-                background: "#efe9dc",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 14,
-                color: "var(--muted)",
-              }}
-            >
-              {primary.processingStatus === "failed" ? "עיבוד נכשל" : "מעבד את התמונה…"}
-            </div>
+            // No derivative yet — an import awaiting its crop. Show the original
+            // (wall and sticky note included) rather than an empty box: it is
+            // the only way to see which painting this row actually is.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={`/images/originals/${primary.originalPath}`}
+              alt=""
+              style={{ display: "block", width: "100%" }}
+            />
           )}
         </div>
       )}
@@ -105,6 +101,13 @@ export default async function EditPainting({ params }: { params: Promise<{ id: s
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {painting.needsCrop && (
+        <div className={a.note}>
+          התמונה עדיין לא נחתכה — מה שמוצג כאן הוא הצילום המקורי, כולל הקיר והפתק.{" "}
+          <Link href="/admin/import/crop">מעבר לחיתוך</Link>
         </div>
       )}
 

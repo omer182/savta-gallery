@@ -1,4 +1,4 @@
-import { desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import Link from "next/link";
 import { db, images, paintings } from "@/db";
 import { fallbackUrl } from "@/lib/imageUrls";
@@ -31,9 +31,15 @@ export default async function AdminHome() {
       needsReview: paintings.needsReview,
       createdBy: paintings.createdBy,
       derivedHash: images.derivedHash,
+      // Imported paintings have no derivative until the crop pass runs, so the
+      // list needs the original to show anything at all. Originals are
+      // admin-gated in the image route, and this page is admin-only.
+      originalPath: images.originalPath,
     })
     .from(paintings)
-    .leftJoin(images, eq(images.paintingId, paintings.id))
+    // Join the PRIMARY image specifically: an unqualified join let SQLite pick
+    // an arbitrary frame, so a painting with several showed a random one.
+    .leftJoin(images, and(eq(images.paintingId, paintings.id), eq(images.isPrimary, true)))
     .groupBy(paintings.id)
     .orderBy(desc(paintings.updatedAt))
     .limit(300)
@@ -74,7 +80,20 @@ export default async function AdminHome() {
             <div className={a.listThumb}>
               {p.derivedHash ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={fallbackUrl(p.derivedHash)} alt="" style={{ display: "block", width: "100%" }} />
+                <img
+                  src={fallbackUrl(p.derivedHash)}
+                  alt=""
+                  style={{ display: "block", width: "100%" }}
+                />
+              ) : p.originalPath ? (
+                // Uncropped: still shows wall and sticky note, but it is what
+                // tells one imported painting from another before the crop pass.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={`/images/originals/${p.originalPath}`}
+                  alt=""
+                  style={{ display: "block", width: "100%", opacity: 0.75 }}
+                />
               ) : (
                 <div style={{ aspectRatio: "1", background: "#efe9dc" }} />
               )}
@@ -87,6 +106,7 @@ export default async function AdminHome() {
                 {p.year ?? "ללא שנה"} · נוצר על ידי {p.createdBy === "artist" ? "בלומה" : p.createdBy === "import" ? "ייבוא" : "מנהל"}
               </div>
             </div>
+            {p.needsCrop && <span className={a.badge}>ממתין לחיתוך</span>}
             <span className={`${a.badge} ${STATUS_CLASS[p.status]}`}>{STATUS_LABEL[p.status]}</span>
           </li>
         ))}
