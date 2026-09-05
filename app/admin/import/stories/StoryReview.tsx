@@ -89,13 +89,13 @@ export function StoryReview({
         </div>
       )}
 
-      {audioSrc ? (
+      {/* Only shown when a recording exists. Sessions without audio should not
+          be told, on every single painting, about a thing they are not doing. */}
+      {audioSrc && (
         <div className={a.field}>
           <label className={a.label}>ההקלטה שלה</label>
           <audio controls src={audioSrc} style={{ width: "100%" }} />
         </div>
-      ) : (
-        <div className={a.note}>אין הקלטה לציור הזה.</div>
       )}
 
       <div className={a.field}>
@@ -122,7 +122,9 @@ export function StoryReview({
           dir="auto"
         />
         <div className={a.hint}>
-          תקנו שגיאות תמלול וחתכו התחלות שווא — אבל השאירו את הניסוח שלה.
+          {audioSrc
+            ? "תקנו שגיאות תמלול וחתכו התחלות שווא — אבל השאירו את הניסוח שלה."
+            : "כתבו את הסיפור כפי שהיא סיפרה אותו."}
         </div>
       </div>
 
