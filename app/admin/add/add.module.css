@@ -26,14 +26,6 @@
   color: var(--muted);
 }
 
-.cropStage {
-  position: relative;
-  width: 100%;
-  height: min(62vh, 520px);
-  background: #2a251e;
-  margin-bottom: 22px;
-}
-
 .uploadState {
   font-size: 14px;
   font-weight: 300;
@@ -51,10 +43,18 @@
 
 /* --- crop stage: the whole photo is always visible and the crop is a
    draggable rectangle over it, so there is nothing to zoom out to fit. --- */
+.cropStage {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 22px;
+  text-align: center;
+}
+/* inline-block so the crop area hugs the photo instead of spanning the column,
+   centred by the stage's text-align. */
 .cropStage :global(.ReactCrop) {
   max-width: 100%;
-  background: #2a251e;
-  display: block;
+  display: inline-block;
+  line-height: 0;
 }
 .cropImg {
   display: block;
@@ -70,10 +70,13 @@
   background-color: #fffefa;
   border: 1px solid #1c1a15;
 }
+/* Do NOT dim with a huge spread shadow here: react-image-crop already draws its
+   own mask, and a 9999em spread escaped this container, greyed the whole page
+   and covered the buttons below the image. A plain outline is all that is
+   needed on top of the library's mask. */
 .cropStage :global(.ReactCrop__crop-selection) {
   border-image: none;
   outline: 2px solid #fffefa;
-  box-shadow: 0 0 0 9999em rgba(28, 26, 21, 0.55);
 }
 
 .backRow {
