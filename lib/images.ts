@@ -154,3 +154,47 @@ export async function generateDerivatives(
 
   return { derivedHash, width, height, thumbhash: await computeThumbhash(base) };
 }
+
+/**
+ * The original's dimensions AFTER EXIF rotation is applied.
+ *
+ * sharp's metadata() always describes the input, so for a photo carrying an
+ * orientation tag of 5-8 (the sideways ones every phone produces) width and
+ * height are reported the wrong way round relative to what the pipeline
+ * actually produces — `sharp(buf).rotate()` swaps them. Crop rectangles are
+ * expressed against the rotated image, so they must be scaled against these
+ * numbers, not the raw ones.
+ */
+export async function orientedSize(
+  originalRelPath: string,
+): Promise<{ width: number; height: number } | null> {
+  try {
+    const meta = await sharp(originalAbsPath(originalRelPath)).metadata();
+    if (!meta.width || !meta.height) return null;
+    const swap = (meta.orientation ?? 1) >= 5;
+    return {
+      width: swap ? meta.height : meta.width,
+      height: swap ? meta.width : meta.height,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Percentage rect (0-100, against the rotated original) → pixel rect. */
+export async function pixelRectFromPercent(
+  originalRelPath: string,
+  pct: { x: number; y: number; width: number; height: number },
+): Promise<CropRect | null> {
+  const size = await orientedSize(originalRelPath);
+  if (!size) return null;
+
+  const clamp = (v: number, max: number) => Math.max(0, Math.min(Math.round(v), max));
+  const x = clamp((pct.x / 100) * size.width, size.width - 1);
+  const y = clamp((pct.y / 100) * size.height, size.height - 1);
+  const width = clamp((pct.width / 100) * size.width, size.width - x);
+  const height = clamp((pct.height / 100) * size.height, size.height - y);
+
+  if (width < 1 || height < 1) return null;
+  return { x, y, width, height };
+}

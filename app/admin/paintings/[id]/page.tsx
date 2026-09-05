@@ -7,6 +7,7 @@ import { getImages, getTagsFor } from "@/lib/queries";
 import { paintingHref } from "@/lib/slug";
 import a from "../../admin.module.css";
 import { AdminNav } from "../../AdminNav";
+import { PaintingImage } from "./PaintingImage";
 import { PaintingEditor } from "./PaintingEditor";
 
 export const dynamic = "force-dynamic";
@@ -46,33 +47,31 @@ export default async function EditPainting({ params }: { params: Promise<{ id: s
       <h1 className={a.h1} dir="auto">
         {painting.title}
       </h1>
-      <p className={a.lede}>
-        <Link href={paintingHref(painting.publicId, painting.title)}>הצגה באתר</Link>
-      </p>
+      {/* The public page only serves published paintings, so this link would
+          404 for a draft or a hidden one. */}
+      {painting.status === "published" ? (
+        <p className={a.lede}>
+          <Link href={paintingHref(painting.publicId, painting.title)}>הצגה באתר</Link>
+        </p>
+      ) : (
+        <p className={a.lede}>הציור אינו מופיע באתר כרגע.</p>
+      )}
 
-      {/* The primary image at a size worth looking at; the rest as thumbs.
-          88px squares were too small to confirm a crop actually landed. */}
       {primary && (
-        <div className={a.preview}>
-          {primary.derivedHash ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={fallbackUrl(primary.derivedHash)}
-              alt=""
-              style={{ display: "block", width: "100%" }}
-            />
-          ) : (
-            // No derivative yet — an import awaiting its crop. Show the original
-            // (wall and sticky note included) rather than an empty box: it is
-            // the only way to see which painting this row actually is.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={`/images/originals/${primary.originalPath}`}
-              alt=""
-              style={{ display: "block", width: "100%" }}
-            />
-          )}
-        </div>
+        <PaintingImage
+          paintingId={painting.id}
+          imageId={primary.id}
+          title={painting.title}
+          /* Cropping always re-reads the ORIGINAL, so a new crop never stacks
+             on top of an old one. */
+          originalSrc={`/images/originals/${primary.originalPath}`}
+          displaySrc={
+            primary.derivedHash
+              ? fallbackUrl(primary.derivedHash)
+              : `/images/originals/${primary.originalPath}`
+          }
+          needsCrop={painting.needsCrop}
+        />
       )}
 
       {others.length > 0 && (

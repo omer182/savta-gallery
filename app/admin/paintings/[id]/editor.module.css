@@ -55,3 +55,20 @@
   color: var(--ink);
   border-color: var(--ink);
 }
+
+/* The main image is a button: clicking it opens the cropper. */
+.imageButton {
+  display: block;
+  width: 100%;
+  text-align: start;
+}
+.imageHint {
+  display: block;
+  margin: 8px 0 22px;
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--umber);
+}
+.imageButton:hover .imageHint {
+  color: var(--ink);
+}

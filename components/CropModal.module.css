@@ -1,0 +1,100 @@
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(28, 26, 21, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow: auto;
+}
+.inner {
+  background: var(--paper);
+  padding: 22px;
+  max-width: 760px;
+  width: 100%;
+}
+.title {
+  font-family: var(--serif);
+  font-size: 21px;
+  margin: 0 0 14px;
+}
+
+.stage {
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  background: #2a251e;
+}
+.stage :global(.ReactCrop) {
+  max-width: 100%;
+  display: inline-block;
+  line-height: 0;
+}
+.photo {
+  display: block;
+  max-width: 100%;
+  max-height: 58vh;
+  width: auto;
+  height: auto;
+}
+/* Fingertip-sized handles; the library default is a few pixels wide. */
+.stage :global(.ReactCrop__drag-handle::after) {
+  width: 18px;
+  height: 18px;
+  background-color: #fffefa;
+  border: 1px solid #1c1a15;
+}
+/* Deliberately no big spread shadow: it escapes the container and covers the
+   page, which is what hid the buttons on the add screen. */
+.stage :global(.ReactCrop__crop-selection) {
+  border-image: none;
+  outline: 2px solid #fffefa;
+}
+
+.readout {
+  margin: 12px 0 0;
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+.primary,
+.quiet {
+  flex: 1;
+  padding: 16px 18px;
+  border-radius: 2px;
+  font-size: 16px;
+  transition: opacity 0.2s;
+}
+.primary {
+  background: var(--ink);
+  color: var(--paper);
+}
+.quiet {
+  background: transparent;
+  color: var(--umber);
+  border: 1px solid var(--line);
+}
+.primary:disabled,
+.quiet:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.primary:hover:not(:disabled),
+.quiet:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+@media (max-width: 560px) {
+  .actions {
+    flex-direction: column;
+  }
+}
