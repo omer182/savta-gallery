@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import a from "@/app/admin/admin.module.css";
 import s from "./login.module.css";
@@ -11,7 +10,6 @@ import s from "./login.module.css";
  * One field is one less thing to confuse her.
  */
 export default function LoginPage() {
-  const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -45,9 +43,15 @@ export default function LoginPage() {
         setBusy(false);
         return;
       }
-      const next = new URLSearchParams(window.location.search).get("next");
-      router.push(next && next.startsWith("/") ? next : (data.next ?? "/admin/add"));
-      router.refresh();
+      const requested = new URLSearchParams(window.location.search).get("next");
+      const target = requested?.startsWith("/") ? requested : (data.next ?? "/admin/add");
+
+      // A full page load, not router.push(). The destination is behind
+      // middleware that reads the session cookie, and a client-side navigation
+      // can issue its RSC request before Safari has committed the Set-Cookie
+      // from this response — middleware then sees no session and bounces
+      // straight back here, which looks like the login silently doing nothing.
+      window.location.assign(target);
     } catch {
       setError("אין חיבור. נסו שוב.");
       setBusy(false);
