@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import ReactCrop, { type Crop } from "react-image-crop";
+import "react-image-crop/dist/ReactCrop.css";
 import type { CropRect } from "@/lib/images";
 import a from "../../admin.module.css";
 import s from "./crop.module.css";
@@ -123,7 +125,13 @@ function pct(r: CropRect, it: CropItem): React.CSSProperties {
   };
 }
 
-/** Full-screen correction for the ones the detector got wrong. */
+/**
+ * Correction for the ones the detector got wrong.
+ *
+ * Same interaction as the add flow: the whole photo is visible and the crop is
+ * a draggable, resizable rectangle. Number fields were precise but nobody wants
+ * to type four coordinates to nudge a box.
+ */
 function ManualCrop({
   item,
   initial,
@@ -135,21 +143,27 @@ function ManualCrop({
   onCancel: () => void;
   onSave: (r: CropRect | null) => void;
 }) {
-  const [box, setBox] = useState<CropRect>(
-    initial ?? {
-      x: Math.round(item.fullWidth * 0.1),
-      y: Math.round(item.fullHeight * 0.1),
-      width: Math.round(item.fullWidth * 0.8),
-      height: Math.round(item.fullHeight * 0.8),
-    },
+  // Held in percent, not display pixels: percentages survive the image being
+  // laid out at whatever size the modal gives it, so converting back to the
+  // original's coordinates never depends on the rendered size.
+  const [crop, setCrop] = useState<Crop>(
+    initial
+      ? {
+          unit: "%",
+          x: (initial.x / item.fullWidth) * 100,
+          y: (initial.y / item.fullHeight) * 100,
+          width: (initial.width / item.fullWidth) * 100,
+          height: (initial.height / item.fullHeight) * 100,
+        }
+      : { unit: "%", x: 10, y: 10, width: 80, height: 80 },
   );
 
-  const clamp = (b: CropRect): CropRect => ({
-    x: Math.max(0, Math.min(b.x, item.fullWidth - 1)),
-    y: Math.max(0, Math.min(b.y, item.fullHeight - 1)),
-    width: Math.max(1, Math.min(b.width, item.fullWidth - b.x)),
-    height: Math.max(1, Math.min(b.height, item.fullHeight - b.y)),
-  });
+  const rect: CropRect = {
+    x: Math.round((crop.x / 100) * item.fullWidth),
+    y: Math.round((crop.y / 100) * item.fullHeight),
+    width: Math.round((crop.width / 100) * item.fullWidth),
+    height: Math.round((crop.height / 100) * item.fullHeight),
+  };
 
   return (
     <div className={s.modal} role="dialog" aria-modal="true">
@@ -159,34 +173,28 @@ function ManualCrop({
         </p>
 
         <div className={s.modalStage}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={item.src} alt="" className={s.modalPhoto} />
-          <span className={s.rect} style={pct(box, item)} />
+          <ReactCrop
+            crop={crop}
+            onChange={(_px, pct) => setCrop(pct)}
+            keepSelection
+            minWidth={20}
+            minHeight={20}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={item.src} alt="" className={s.modalPhoto} />
+          </ReactCrop>
         </div>
 
-        <div className={s.numbers}>
-          {(
-            [
-              ["x", "מימין"],
-              ["y", "מלמעלה"],
-              ["width", "רוחב"],
-              ["height", "גובה"],
-            ] as const
-          ).map(([k, label]) => (
-            <label key={k}>
-              <span>{label}</span>
-              <input
-                className={a.input}
-                type="number"
-                value={Math.round(box[k])}
-                onChange={(e) => setBox(clamp({ ...box, [k]: Number(e.target.value) }))}
-              />
-            </label>
-          ))}
-        </div>
+        <p className={s.readout}>
+          {rect.width} × {rect.height} פיקסלים
+        </p>
 
         <div className={s.modalActions}>
-          <button className={a.btn} type="button" onClick={() => onSave(box)}>
+          <button
+            className={a.btn}
+            type="button"
+            onClick={() => onSave(rect.width > 0 && rect.height > 0 ? rect : null)}
+          >
             שמירה
           </button>
           <button className={`${a.btn} ${a.btnQuiet}`} type="button" onClick={() => onSave(null)}>
