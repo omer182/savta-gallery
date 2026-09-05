@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent | React.KeyboardEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
@@ -60,6 +60,17 @@ export default function LoginPage() {
             autoFocus
             dir="ltr"
             style={{ textAlign: "start" }}
+            /* Without enterKeyHint the iOS keyboard shows a plain "return" that
+               does not submit; this makes it a Go key. The explicit keydown is
+               the belt to that braces, since some mobile keyboards still send
+               only a keypress. */
+            enterKeyHint="go"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                if (!busy && password) void submit(e);
+              }
+            }}
           />
         </div>
         <button className={a.btn} type="submit" disabled={busy || !password}>

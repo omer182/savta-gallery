@@ -1,4 +1,6 @@
+import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
+import { db, paintings } from "@/db";
 import { getSession } from "@/lib/auth";
 import {
   deletePainting,
@@ -18,21 +20,27 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     | null;
   if (!body) return Response.json({ error: "Bad request" }, { status: 400 });
 
-  if (body.status) {
-    // Publishing is admin-only; "hide" is the artist-safe alternative to delete,
-    // but she has no reason to reach this route at all (§1).
-    if (session.role !== "admin") {
-      return Response.json({ error: "Forbidden" }, { status: 403 });
-    }
-    setStatus(id, body.status);
+  const [current] = db
+    .select({ status: paintings.status })
+    .from(paintings)
+    .where(eq(paintings.id, id))
+    .limit(1)
+    .all();
+  if (!current) return Response.json({ error: "Not found" }, { status: 404 });
+
+  // The editor saves fields and state together, so it always sends `status`.
+  // Only an actual CHANGE is a publish action — rejecting an unchanged value
+  // would block a non-admin from saving ordinary edits.
+  const changingStatus = !!body.status && body.status !== current.status;
+  if (changingStatus && session.role !== "admin") {
+    return Response.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  if (body.title) {
-    updatePainting(id, body);
-    revalidateAll();
-  }
+  if (body.title) updatePainting(id, body);
+  if (changingStatus) setStatus(id, body.status!);
 
-  return Response.json({ ok: true });
+  revalidateAll();
+  return Response.json({ ok: true, status: body.status ?? current.status });
 }
 
 export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {

@@ -48,3 +48,78 @@
 .retry:hover {
   color: var(--ink);
 }
+
+/* --- crop stage: the whole photo is always visible and the crop is a
+   draggable rectangle over it, so there is nothing to zoom out to fit. --- */
+.cropStage :global(.ReactCrop) {
+  max-width: 100%;
+  background: #2a251e;
+  display: block;
+}
+.cropImg {
+  display: block;
+  max-width: 100%;
+  max-height: min(60vh, 520px);
+  width: auto;
+  margin-inline: auto;
+}
+/* Bigger handles: this is dragged with a fingertip on a phone. */
+.cropStage :global(.ReactCrop__drag-handle::after) {
+  width: 18px;
+  height: 18px;
+  background-color: #fffefa;
+  border: 1px solid #1c1a15;
+}
+.cropStage :global(.ReactCrop__crop-selection) {
+  border-image: none;
+  outline: 2px solid #fffefa;
+  box-shadow: 0 0 0 9999em rgba(28, 26, 21, 0.55);
+}
+
+.backRow {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.backLink {
+  font-size: 14px;
+  color: var(--umber);
+}
+.backLink:hover {
+  color: var(--ink);
+}
+
+/* Inline "add" button beside a text field, sized to its content. */
+.inlineBtn {
+  flex: 0 0 auto;
+  padding: 0 20px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: var(--placard);
+  color: var(--umber);
+  font-size: 15px;
+}
+.inlineBtn:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.publishRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+  padding: 14px 16px;
+  background: var(--placard);
+  border: 1px solid var(--line);
+  font-size: 16px;
+  cursor: pointer;
+}
+.publishRow input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--ink);
+}

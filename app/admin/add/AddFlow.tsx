@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
-import Cropper, { type Area } from "react-easy-crop";
+import { useEffect, useRef, useState } from "react";
+import ReactCrop, { type Crop, type PixelCrop } from "react-image-crop";
+import "react-image-crop/dist/ReactCrop.css";
 import a from "../admin.module.css";
 import s from "./add.module.css";
 
@@ -32,28 +34,50 @@ type Draft = {
   tags: string[];
 };
 
-const EMPTY: Draft = { title: "", year: "", medium: "", widthCm: "", heightCm: "", story: "", tags: [] };
+const EMPTY: Draft = {
+  title: "",
+  year: "",
+  medium: "",
+  widthCm: "",
+  heightCm: "",
+  story: "",
+  tags: [],
+};
 
-const MEDIA = ["שמן על בד", "שמן על לוח", "אקוורל", "רישום"];
-
-export function AddFlow({ knownTags, canCreateTags }: { knownTags: string[]; canCreateTags: boolean }) {
+export function AddFlow({
+  knownTags,
+  knownMedia,
+  isAdmin,
+}: {
+  knownTags: string[];
+  knownMedia: string[];
+  isAdmin: boolean;
+}) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("photo");
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [restored, setRestored] = useState(false);
 
   const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [croppedUrl, setCroppedUrl] = useState<string | null>(null);
   const fileRef = useRef<File | null>(null);
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [areaPixels, setAreaPixels] = useState<Area | null>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  const [crop, setCrop] = useState<Crop>();
+  const [pixelCrop, setPixelCrop] = useState<PixelCrop | null>(null);
 
   const [imageId, setImageId] = useState<number | null>(null);
   const [progress, setProgress] = useState(0);
   const [uploadState, setUploadState] = useState<"idle" | "busy" | "done" | "error">("idle");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [tagPool, setTagPool] = useState<string[]>(knownTags);
+  const [mediaPool, setMediaPool] = useState<string[]>(knownMedia);
   const [newTag, setNewTag] = useState("");
+  const [newMedium, setNewMedium] = useState("");
+  const [showMediumInput, setShowMediumInput] = useState(false);
+  const [publishNow, setPublishNow] = useState(false);
 
   /* ---------- autosave: she must never lose typed text (§9) ---------- */
   // Reading localStorage must happen after mount, not in a lazy useState
@@ -109,26 +133,67 @@ export function AddFlow({ knownTags, canCreateTags }: { knownTags: string[]; can
     }
 
     fileRef.current = file;
+    setCrop(undefined);
+    setPixelCrop(null);
     setFileUrl(URL.createObjectURL(file));
     setStep("crop");
   }
 
-  /* ---------- crop → background upload ---------- */
-  const onCropComplete = useCallback((_: Area, px: Area) => setAreaPixels(px), []);
+  /**
+   * The whole photo is always visible and the crop is a draggable rectangle
+   * over it, so there is nothing to "zoom out" to fit and the corners can be
+   * nudged precisely. Opens at 80% so the handles are immediately grabbable.
+   */
+  function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+    const { width, height } = e.currentTarget;
+    setCrop({ unit: "%", x: 10, y: 10, width: 80, height: 80 });
+    setPixelCrop({
+      unit: "px",
+      x: width * 0.1,
+      y: height * 0.1,
+      width: width * 0.8,
+      height: height * 0.8,
+    });
+  }
 
+  /* ---------- crop → background upload ---------- */
   async function confirmCrop() {
-    if (!fileRef.current || !areaPixels) return;
+    if (!fileRef.current || !pixelCrop || !imgRef.current) return;
+
+    // The image is displayed scaled to fit, so the crop rectangle is in display
+    // pixels and must be scaled back up to the photo's natural size.
+    const img = imgRef.current;
+    const scaleX = img.naturalWidth / img.width;
+    const scaleY = img.naturalHeight / img.height;
+    const area = {
+      x: pixelCrop.x * scaleX,
+      y: pixelCrop.y * scaleY,
+      width: pixelCrop.width * scaleX,
+      height: pixelCrop.height * scaleY,
+    };
+
+    let blob: Blob;
+    try {
+      blob = await renderCrop(fileRef.current, area);
+    } catch {
+      setError("לא הצלחנו לחתוך את התמונה. נסו שוב.");
+      return;
+    }
+
+    // Show what was actually cropped on the details screen, not the original
+    // frame — otherwise the wall she just removed is still on screen.
+    if (croppedUrl) URL.revokeObjectURL(croppedUrl);
+    setCroppedUrl(URL.createObjectURL(blob));
     setStep("details");
 
     // Fire and forget: she types while this runs, so saving feels instant.
-    void uploadCropped(fileRef.current, areaPixels);
+    void uploadBlob(blob);
   }
 
-  async function uploadCropped(file: File, area: Area) {
+  async function uploadBlob(blob: Blob) {
     setUploadState("busy");
     setProgress(0);
     try {
-      const blob = await renderCrop(file, area);
       const form = new FormData();
       form.append("file", blob, "painting.jpg");
 
@@ -157,6 +222,41 @@ export function AddFlow({ knownTags, canCreateTags }: { knownTags: string[]; can
     }
   }
 
+  /* ---------- tags & technique ---------- */
+  async function addTag() {
+    const name = newTag.trim();
+    if (!name) return;
+    setNewTag("");
+    if (!draft.tags.includes(name)) set("tags", [...draft.tags, name]);
+
+    // Persisted immediately, so the tag is offered on the next painting even if
+    // this one is never saved.
+    try {
+      const res = await fetch("/api/tags", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { tags: string[] };
+        setTagPool(data.tags);
+        return;
+      }
+    } catch {
+      /* offline — fall through to the local-only pool below */
+    }
+    setTagPool((p) => (p.includes(name) ? p : [...p, name]));
+  }
+
+  function addMedium() {
+    const name = newMedium.trim();
+    if (!name) return;
+    setMediaPool((p) => (p.includes(name) ? p : [...p, name]));
+    set("medium", name);
+    setNewMedium("");
+    setShowMediumInput(false);
+  }
+
   /* ---------- save ---------- */
   async function save() {
     if (!draft.title.trim()) {
@@ -178,6 +278,7 @@ export function AddFlow({ knownTags, canCreateTags }: { knownTags: string[]; can
           story: draft.story || null,
           tags: draft.tags,
           imageIds: imageId ? [imageId] : [],
+          publishNow: isAdmin && publishNow,
         }),
       });
       if (!res.ok) throw new Error();
@@ -199,11 +300,15 @@ export function AddFlow({ knownTags, canCreateTags }: { knownTags: string[]; can
 
   function startAnother() {
     setDraft(EMPTY);
+    if (fileUrl) URL.revokeObjectURL(fileUrl);
+    if (croppedUrl) URL.revokeObjectURL(croppedUrl);
     setFileUrl(null);
+    setCroppedUrl(null);
     fileRef.current = null;
     setImageId(null);
     setUploadState("idle");
     setProgress(0);
+    setPublishNow(false);
     setStep("photo");
   }
 
@@ -224,15 +329,23 @@ export function AddFlow({ knownTags, canCreateTags }: { knownTags: string[]; can
           <h1 className={a.h1}>הוספת ציור</h1>
           <p className={a.lede}>נתחיל בתמונה של הציור.</p>
           {restored && (
-            <div className={a.note}>
-              יש טיוטה שמורה מפעם קודמת — הטקסט שכתבת מחכה לך במסך הבא.
-            </div>
+            <div className={a.note}>יש טיוטה שמורה מפעם קודמת — הטקסט שכתבת מחכה לך במסך הבא.</div>
           )}
           <label className={s.picker}>
             <input type="file" accept="image/*" onChange={onPick} hidden />
             <span className={s.pickerIcon}>+</span>
             <span>בחרי תמונה</span>
           </label>
+          <div className={s.backRow}>
+            <Link className={s.backLink} href="/">
+              → חזרה לגלריה
+            </Link>
+            {isAdmin && (
+              <Link className={s.backLink} href="/admin">
+                → לניהול
+              </Link>
+            )}
+          </div>
         </>
       )}
 
@@ -241,18 +354,20 @@ export function AddFlow({ knownTags, canCreateTags }: { knownTags: string[]; can
           <h1 className={a.h1}>חיתוך</h1>
           <p className={a.lede}>גררי את הפינות כדי להשאיר רק את הציור.</p>
           <div className={s.cropStage}>
-            <Cropper
-              image={fileUrl}
+            <ReactCrop
               crop={crop}
-              zoom={zoom}
-              onCropChange={setCrop}
-              onZoomChange={setZoom}
-              onCropComplete={onCropComplete}
-              objectFit="contain"
-              restrictPosition={false}
-              /* Paintings are never uniform, so the crop is free-form (§2). */
-              aspect={undefined}
-            />
+              onChange={(px, pct) => {
+                setCrop(pct);
+                setPixelCrop(px);
+              }}
+              onComplete={(px) => setPixelCrop(px)}
+              keepSelection
+              minWidth={20}
+              minHeight={20}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img ref={imgRef} src={fileUrl} alt="" onLoad={onImageLoad} className={s.cropImg} />
+            </ReactCrop>
           </div>
           <button className={a.btn} onClick={confirmCrop} type="button">
             המשך
@@ -272,10 +387,10 @@ export function AddFlow({ knownTags, canCreateTags }: { knownTags: string[]; can
         <>
           <h1 className={a.h1}>פרטי הציור</h1>
 
-          {fileUrl && (
+          {croppedUrl && (
             <div className={a.preview}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={fileUrl} alt="" style={{ display: "block", width: "100%" }} />
+              <img src={croppedUrl} alt="" style={{ display: "block", width: "100%" }} />
             </div>
           )}
 
@@ -292,13 +407,7 @@ export function AddFlow({ knownTags, canCreateTags }: { knownTags: string[]; can
             {uploadState === "error" && (
               <span>
                 התמונה לא עלתה.{" "}
-                <button
-                  type="button"
-                  className={s.retry}
-                  onClick={() => {
-                    if (fileRef.current && areaPixels) void uploadCropped(fileRef.current, areaPixels);
-                  }}
-                >
+                <button type="button" className={s.retry} onClick={() => void confirmCrop()}>
                   נסי שוב
                 </button>
               </span>
@@ -348,7 +457,7 @@ export function AddFlow({ knownTags, canCreateTags }: { knownTags: string[]; can
           <div className={a.field}>
             <label className={a.label}>טכניקה</label>
             <div className={a.chips}>
-              {MEDIA.map((m) => (
+              {mediaPool.map((m) => (
                 <button
                   key={m}
                   type="button"
@@ -358,7 +467,34 @@ export function AddFlow({ knownTags, canCreateTags }: { knownTags: string[]; can
                   {m}
                 </button>
               ))}
+              <button
+                type="button"
+                className={a.chip}
+                onClick={() => setShowMediumInput((v) => !v)}
+              >
+                + טכניקה אחרת
+              </button>
             </div>
+            {showMediumInput && (
+              <div className={a.row} style={{ marginTop: 12 }}>
+                <input
+                  className={a.input}
+                  placeholder="טכניקה חדשה"
+                  value={newMedium}
+                  onChange={(e) => setNewMedium(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addMedium();
+                    }
+                  }}
+                  dir="auto"
+                />
+                <button type="button" className={s.inlineBtn} onClick={addMedium}>
+                  הוספה
+                </button>
+              </div>
+            )}
           </div>
 
           <div className={a.field}>
@@ -378,7 +514,7 @@ export function AddFlow({ knownTags, canCreateTags }: { knownTags: string[]; can
           <div className={a.field}>
             <label className={a.label}>תגיות</label>
             <div className={a.chips}>
-              {Array.from(new Set([...knownTags, ...draft.tags])).map((t) => (
+              {Array.from(new Set([...tagPool, ...draft.tags])).map((t) => (
                 <button
                   key={t}
                   type="button"
@@ -386,7 +522,9 @@ export function AddFlow({ knownTags, canCreateTags }: { knownTags: string[]; can
                   onClick={() =>
                     set(
                       "tags",
-                      draft.tags.includes(t) ? draft.tags.filter((x) => x !== t) : [...draft.tags, t],
+                      draft.tags.includes(t)
+                        ? draft.tags.filter((x) => x !== t)
+                        : [...draft.tags, t],
                     )
                   }
                 >
@@ -394,33 +532,49 @@ export function AddFlow({ knownTags, canCreateTags }: { knownTags: string[]; can
                 </button>
               ))}
             </div>
-            {canCreateTags && (
+            {isAdmin && (
               <div className={a.row} style={{ marginTop: 12 }}>
                 <input
                   className={a.input}
                   placeholder="תגית חדשה"
                   value={newTag}
                   onChange={(e) => setNewTag(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void addTag();
+                    }
+                  }}
                   dir="auto"
                 />
-                <button
-                  type="button"
-                  className={`${a.btn} ${a.btnQuiet}`}
-                  style={{ flex: "0 0 auto", width: "auto", padding: "0 20px" }}
-                  onClick={() => {
-                    const t = newTag.trim();
-                    if (t && !draft.tags.includes(t)) set("tags", [...draft.tags, t]);
-                    setNewTag("");
-                  }}
-                >
+                <button type="button" className={s.inlineBtn} onClick={() => void addTag()}>
                   הוספה
                 </button>
               </div>
             )}
           </div>
 
+          {isAdmin && (
+            <label className={s.publishRow}>
+              <input
+                type="checkbox"
+                checked={publishNow}
+                onChange={(e) => setPublishNow(e.target.checked)}
+              />
+              <span>לפרסם באתר מיד</span>
+            </label>
+          )}
+
           <button className={a.btn} onClick={save} disabled={saving} type="button">
-            {saving ? "שומר…" : "שמירה"}
+            {saving ? "שומר…" : publishNow && isAdmin ? "שמירה ופרסום" : "שמירה"}
+          </button>
+          <button
+            className={`${a.btn} ${a.btnQuiet}`}
+            style={{ marginTop: 10 }}
+            onClick={() => setStep("crop")}
+            type="button"
+          >
+            → חזרה לחיתוך
           </button>
         </>
       )}
@@ -428,10 +582,20 @@ export function AddFlow({ knownTags, canCreateTags }: { knownTags: string[]; can
       {step === "done" && (
         <>
           <h1 className={a.h1}>נשמר</h1>
-          <p className={a.lede}>הציור נשמר. עומר יעלה אותו לאתר.</p>
+          <p className={a.lede}>
+            {isAdmin && publishNow ? "הציור פורסם באתר." : "הציור נשמר. עומר יעלה אותו לאתר."}
+          </p>
           <button className={a.btn} onClick={startAnother} type="button">
             הוספת ציור נוסף
           </button>
+          <Link className={`${a.btn} ${a.btnQuiet}`} style={{ marginTop: 10 }} href="/">
+            → חזרה לגלריה
+          </Link>
+          {isAdmin && (
+            <Link className={`${a.btn} ${a.btnQuiet}`} style={{ marginTop: 10 }} href="/admin">
+              → לניהול
+            </Link>
+          )}
         </>
       )}
     </div>
@@ -442,7 +606,10 @@ export function AddFlow({ knownTags, canCreateTags }: { knownTags: string[]; can
  * Applies the crop and downscales to MAX_EDGE before upload, so a 40MB photo
  * becomes a couple of MB on a phone connection (§4).
  */
-async function renderCrop(file: File, area: Area): Promise<Blob> {
+async function renderCrop(
+  file: File,
+  area: { x: number; y: number; width: number; height: number },
+): Promise<Blob> {
   const bitmap = await createImageBitmap(file);
 
   let w = Math.round(area.width);
@@ -452,12 +619,12 @@ async function renderCrop(file: File, area: Area): Promise<Blob> {
   h = Math.round(h * scale);
 
   const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
+  canvas.width = Math.max(1, w);
+  canvas.height = Math.max(1, h);
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("no 2d context");
 
-  ctx.drawImage(bitmap, area.x, area.y, area.width, area.height, 0, 0, w, h);
+  ctx.drawImage(bitmap, area.x, area.y, area.width, area.height, 0, 0, canvas.width, canvas.height);
   bitmap.close?.();
 
   return new Promise((resolve, reject) =>
