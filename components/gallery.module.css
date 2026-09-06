@@ -142,20 +142,16 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  /*
-   * Asymmetric gutters: the vertical gap is roughly twice the horizontal.
-   * A uniform gap reads as a contact sheet; giving each row more air above and
-   * below is what makes a wall of paintings feel hung rather than tiled. The
-   * placard sits in that vertical space, so it needs the room anyway.
-   */
-  column-gap: var(--gap);
-  row-gap: calc(var(--gap) * 2);
+  /* Tight and even. The paintings should sit close together — the frames and
+     placards already separate them, so a wide gutter just pushes them apart. */
+  gap: 8px;
   grid-auto-rows: 4px;
   padding-bottom: 24px;
 }
 @media (min-width: 640px) {
   .grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
   }
 }
 @media (min-width: 1024px) {
@@ -168,8 +164,8 @@
   display: block;
   /*
    * Fallback until the span pass runs. A span is not a pixel count — each step
-   * adds a 4px row AND a gap — so 17 is 17*4 + 16*22 = 420px on desktop and
-   * 292px on mobile, roughly a real tile. If the script never runs the gallery
+   * adds a 4px row AND a gap — so 17 is 17*4 + 16*12 = 260px on desktop and
+   * 196px on mobile, roughly a real tile. If the script never runs the gallery
    * degrades to plain even columns, never to a blank page.
    */
   grid-row: span 17;
