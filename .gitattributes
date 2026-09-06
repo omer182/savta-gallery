@@ -1,0 +1,20 @@
+# Normalise text in the repository.
+* text=auto
+
+# These are read by Linux inside the container. A CRLF shell script fails with
+# "bad interpreter: /bin/sh^M", and it fails on the server, not here — so the
+# line endings are pinned rather than left to a developer's core.autocrlf.
+*.sh            text eol=lf
+Dockerfile      text eol=lf
+docker-entrypoint.sh text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+deploy/*.conf   text eol=lf
+
+# Binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.avif binary
+*.ico binary
