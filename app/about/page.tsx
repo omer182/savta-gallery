@@ -3,7 +3,16 @@ import { PublicShell } from "@/components/PublicShell";
 import { getPage } from "@/lib/queries";
 import s from "./page.module.css";
 
-export const revalidate = 3600;
+/**
+ * Never prerendered. Two reasons, and the second is load-bearing:
+ *
+ * 1. SiteHeader reads the session cookie, so this page's output already
+ *    differs per visitor and must not be cached across them.
+ * 2. A prerender runs its queries AT BUILD TIME, where there is no database —
+ *    the container build has no /data — and the page dies with SQLITE_ERROR.
+ *    The build must never depend on the archive existing.
+ */
+export const dynamic = "force-dynamic";
 
 export const metadata = { title: "אודות" };
 

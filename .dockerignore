@@ -12,6 +12,7 @@ dist/
 .github/
 .env
 .env.*
+*.env
 !.env.example
 
 *.md

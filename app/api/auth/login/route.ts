@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { rateLimit, roleForPassword } from "@/lib/auth";
-import { COOKIE_NAME, cookieOptions, createToken } from "@/lib/session";
+import { COOKIE_NAME, cookieOptions, createToken, requestIsSecure } from "@/lib/session";
 
 export async function POST(req: NextRequest) {
   const ip =
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
   const res = Response.json({ ok: true, role, next: role === "admin" ? "/admin" : "/admin/add" });
   const headers = new Headers(res.headers);
-  const opts = cookieOptions(role);
+  const opts = cookieOptions(role, requestIsSecure(req));
   headers.append(
     "Set-Cookie",
     `${COOKIE_NAME}=${await createToken(role)}; Path=${opts.path}; Max-Age=${opts.maxAge}; SameSite=Lax; HttpOnly${

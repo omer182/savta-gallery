@@ -6,9 +6,16 @@ import { PublicShell } from "@/components/PublicShell";
 import { toCardView } from "@/lib/cardView";
 import { countPublished, listPublished, listTagsInUse } from "@/lib/queries";
 
-// Database-backed, so it must not freeze at build time. Publishing calls
-// revalidatePath("/"), which is what makes this cheap behind Cloudflare.
-export const revalidate = 3600;
+/**
+ * Never prerendered. Two reasons, and the second is load-bearing:
+ *
+ * 1. SiteHeader reads the session cookie, so this page's output already
+ *    differs per visitor and must not be cached across them.
+ * 2. A prerender runs its queries AT BUILD TIME, where there is no database —
+ *    the container build has no /data — and the page dies with SQLITE_ERROR.
+ *    The build must never depend on the archive existing.
+ */
+export const dynamic = "force-dynamic";
 
 export default async function Home({
   searchParams,

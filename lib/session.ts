@@ -85,12 +85,29 @@ export async function verifyToken(token: string | undefined | null): Promise<Ses
   }
 }
 
-export function cookieOptions(role: Role) {
+/**
+ * `secure` is decided by the ACTUAL connection, not by NODE_ENV.
+ *
+ * A Secure cookie is silently discarded over plain HTTP. Keying it to
+ * NODE_ENV=production meant the deployed app could never be signed into over
+ * http — visiting the server directly on the LAN accepted the password, set a
+ * cookie the browser threw away, and bounced back to the login page with no
+ * error. Behind Cloudflare/nginx the request is https and the flag is still
+ * set, which is where it actually matters.
+ */
+export function cookieOptions(role: Role, isSecure: boolean) {
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: isSecure,
     sameSite: "lax" as const,
     path: "/",
     maxAge: MAX_AGE[role],
   };
+}
+
+/** True when the browser's connection is HTTPS, proxies accounted for. */
+export function requestIsSecure(req: Request): boolean {
+  const proto =
+    req.headers.get("x-forwarded-proto") ?? new URL(req.url).protocol.replace(":", "");
+  return proto.split(",")[0]!.trim() === "https";
 }
