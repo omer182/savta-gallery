@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { authLog, describeRequest, describeToken } from "@/lib/authLog";
 import { COOKIE_NAME, verifyToken } from "@/lib/session";
 
 /**
@@ -12,7 +13,14 @@ import { COOKIE_NAME, verifyToken } from "@/lib/session";
  */
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const session = await verifyToken(req.cookies.get(COOKIE_NAME)?.value);
+  const raw = req.cookies.get(COOKIE_NAME)?.value;
+  const session = await verifyToken(raw);
+  authLog("middleware", {
+    path: pathname,
+    ...describeRequest(req),
+    token: describeToken(raw),
+    verified: session ? session.role : "NO",
+  });
 
   if (!session) {
     const url = req.nextUrl.clone();
