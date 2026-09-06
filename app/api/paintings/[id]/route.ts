@@ -2,10 +2,10 @@ import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { db, paintings } from "@/db";
 import { getSession } from "@/lib/auth";
+import { revalidateAll } from "@/lib/revalidate";
 import {
   deletePainting,
   type PaintingInput,
-  revalidateAll,
   setStatus,
   updatePainting,
 } from "@/lib/mutations";

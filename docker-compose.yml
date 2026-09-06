@@ -1,0 +1,19 @@
+# Local / from-source. The Portainer stack on the home server uses the
+# pre-built GHCR image instead — see README.
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # Bound to loopback: nginx is the only thing that should reach it.
+    ports:
+      - "127.0.0.1:3006:3000"
+    environment:
+      - DATA_DIR=/data
+      - SESSION_SECRET=${SESSION_SECRET:?set SESSION_SECRET}
+      - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH:?set ADMIN_PASSWORD_HASH}
+      - ARTIST_PASSWORD_HASH=${ARTIST_PASSWORD_HASH:?set ARTIST_PASSWORD_HASH}
+    volumes:
+      # The entire archive: db/, images/, and any import/ session folders.
+      - ./data:/data
+    restart: unless-stopped

@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# bundled CLI scripts, produced by `npm run build:scripts` for the image
+/dist/
+
 # production
 /build
 

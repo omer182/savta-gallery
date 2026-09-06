@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { getSession } from "@/lib/auth";
-import { createPainting, type PaintingInput, revalidateAll, setStatus } from "@/lib/mutations";
+import { revalidateAll } from "@/lib/revalidate";
+import { createPainting, type PaintingInput, setStatus } from "@/lib/mutations";
 
 /** Creates a painting. Both roles may create; both create drafts (PLAN.md §1). */
 export async function POST(req: NextRequest) {

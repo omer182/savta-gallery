@@ -1,5 +1,4 @@
 import { and, eq, inArray, isNull, lt, sql } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
 import { db, images, paintings, paintingTags, tags } from "@/db";
 import { newPublicId, slugifyTitle } from "./slug";
 
@@ -112,19 +111,10 @@ export function setStatus(id: number, status: "draft" | "published" | "hidden") 
     .set({ status, updatedAt: Math.floor(Date.now() / 1000) })
     .where(eq(paintings.id, id))
     .run();
-  revalidateAll();
 }
 
 export function deletePainting(id: number) {
   db.delete(paintings).where(eq(paintings.id, id)).run();
-  revalidateAll();
-}
-
-/** Publishing must invalidate the cached public pages (§9). */
-export function revalidateAll() {
-  revalidatePath("/");
-  revalidatePath("/about");
-  revalidatePath("/painting/[slug]", "page");
 }
 
 /**

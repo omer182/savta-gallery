@@ -2,8 +2,9 @@ import { and, eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { db, images, paintings } from "@/db";
 import { getSession } from "@/lib/auth";
+import { revalidateAll } from "@/lib/revalidate";
 import { pixelRectFromPercent } from "@/lib/images";
-import { revalidateAll } from "@/lib/mutations";
+import { } from "@/lib/mutations";
 import { processNow } from "@/lib/queue";
 
 type PctRect = { x: number; y: number; width: number; height: number };

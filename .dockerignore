@@ -1,0 +1,22 @@
+# Never enters the build context. /data is the live archive — the SQLite file,
+# the originals, the derivatives — and must come from the mounted volume at
+# runtime, never be baked into an image.
+data/
+import/
+
+node_modules/
+.next/
+dist/
+
+.git/
+.github/
+.env
+.env.*
+!.env.example
+
+*.md
+!README.md
+
+.vscode/
+.idea/
+npm-debug.log*

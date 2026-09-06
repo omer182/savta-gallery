@@ -1,36 +1,113 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Savta Gallery
 
-## Getting Started
+A public, museum-style archive of Bluma Swhartzberg Kamin's paintings, with a
+phone-friendly admin so she can add her own work. Hebrew throughout, RTL.
 
-First, run the development server:
+Full specification: **[PLAN.md](PLAN.md)** · Working notes: **[CLAUDE.md](CLAUDE.md)**
+
+## Local development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run hash -- "artist password" "admin password"   # → paste into .env.local
+npm run db:migrate
+npm run db:seed                                       # sample Hebrew paintings
+npm run dev                                           # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+> **The `$` in an argon2 hash must be backslash-escaped in `.env.local`.**
+> Next runs dotenv-expand over `.env` files, and `$argon2id$v=19$m=…` otherwise
+> expands away to a value no password can ever match — a login that fails with
+> no visible reason. `npm run hash` prints the escaped form for you. Portainer's
+> env panel does no expansion, so paste the **raw** value there.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The password itself selects the role: one value logs in as `artist`, the other
+as `admin`. Don't set them to the same string.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Commands
 
-## Learn More
+| | |
+|---|---|
+| `npm run dev` / `build` / `start` | the app |
+| `npm run lint` / `typecheck` | checks |
+| `npm run db:migrate` / `db:seed` / `db:reset` / `db:studio` | database |
+| `npm run hash` | generate `SESSION_SECRET` and password hashes |
+| `npm run icons -- [image]` | PWA icons (defaults to a placeholder mark) |
+| `npm run test:session -- 5` | synthetic digitization session for testing |
+| `npm run import -- <dir> [--dry-run]` | bulk import (PLAN.md §11) |
 
-To learn more about Next.js, take a look at the following resources:
+## Deploying to the home server
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Every push to `main` builds and publishes to GHCR as
+`ghcr.io/<owner>/<repo>:latest`. Portainer **pulls that image** — it does not
+build on the server.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 1. Portainer stack
 
-## Deploy on Vercel
+**Stacks → Add stack → Web editor**:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```yaml
+services:
+  web:
+    image: ghcr.io/omer182/savta-gallary:latest
+    ports:
+      - "127.0.0.1:3006:3000"
+    environment:
+      - DATA_DIR=/data
+      - SESSION_SECRET=${SESSION_SECRET}
+      - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH}
+      - ARTIST_PASSWORD_HASH=${ARTIST_PASSWORD_HASH}
+    volumes:
+      - /srv/savta-gallery/data:/data
+    restart: unless-stopped
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Put the three secrets in the stack's **Environment variables** panel, not in
+the YAML — raw, with no quotes and no backslashes.
+
+If the package is private, add a registry credential in Portainer
+(**Registries → GitHub**) using a PAT with `read:packages`.
+
+### 2. nginx
+
+`deploy/nginx.example.conf` is a reference for the vhost. The parts that matter:
+`client_max_body_size 50m` (uploads 413 without it), derivatives served straight
+off disk with an immutable cache header, and no caching on `/admin`, `/api` or
+`/login`.
+
+**Originals are deliberately not served by nginx.** They are the uncropped
+frames — for imported paintings they still show the wall and the numbered
+sticky note — and the app gates them behind an admin session. Serving them from
+disk would bypass that.
+
+### 3. Updating
+
+Push to `main`, wait for the Action, then **Stacks → savta-gallery → Pull and
+redeploy**. Migrations run automatically on container start.
+
+## Everything lives in `/data`
+
+```
+/data
+  db/gallery.db        SQLite — paintings, images, tags, FTS index
+  images/originals/    archival originals, never modified
+  images/derived/      AVIF/WebP/JPEG, content-hashed
+  import/<date>/       digitization sessions (PLAN.md §11)
+```
+
+Back this up and you have backed up the site. Off-site backup is deliberately
+**deferred** (PLAN.md §7) — decide it before the archive is treated as the
+system of record, because these files cannot be recreated.
+
+## Bulk import
+
+Photos named by number plus a `manifest.csv` with a matching `num` column.
+Run it **on the server** — SQLite over a network share breaks file locking:
+
+```
+Portainer → Containers → savta-gallery → Console
+node dist/scripts/import.mjs /data/import/2026-09-06 --dry-run
+```
+
+Always dry-run first: it reports cluster/row mismatches by number before
+anything is written. Then `/admin/import/crop`, then `/admin/import/stories`.

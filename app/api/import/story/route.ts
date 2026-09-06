@@ -2,7 +2,8 @@ import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { db, paintings } from "@/db";
 import { getSession } from "@/lib/auth";
-import { revalidateAll } from "@/lib/mutations";
+import { revalidateAll } from "@/lib/revalidate";
+import { } from "@/lib/mutations";
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
