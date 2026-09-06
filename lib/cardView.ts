@@ -41,8 +41,20 @@ export function toCardView(p: CardPainting): CardView {
     placeholder: thumbhashDataUrl(p.thumbhash),
     width: iw,
     height: p.imgHeight ?? null,
-    // Before an image exists, fall back to the recorded canvas proportions so
-    // the masonry keeps honest shapes for seeded/processing rows.
-    ratio: p.widthCm && p.heightCm ? p.heightCm / p.widthCm : 1,
+    /*
+     * height / width.
+     *
+     * The PROCESSED IMAGE wins: the mosaic sizes a tile from this ratio while
+     * the image itself is laid out from its own pixel dimensions, so if the two
+     * disagree the row heights go ragged. Canvas centimetres are only a
+     * fallback for rows whose image has not been processed yet, and 1:1 the
+     * last resort.
+     */
+    ratio:
+      p.imgWidth && p.imgHeight
+        ? p.imgHeight / p.imgWidth
+        : p.widthCm && p.heightCm
+          ? p.heightCm / p.widthCm
+          : 1,
   };
 }

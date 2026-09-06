@@ -124,52 +124,55 @@
   border-bottom-color: var(--ink);
 }
 
-/* ---------------- masonry ---------------- */
-/* CSS Grid row-spans, never `columns`: multi-column fills column-by-column and
-   would scramble sort_order. */
+/* ---------------- mosaic ---------------- */
+/*
+ * Justified rows, the way paintings are actually hung: each row runs flush
+ * from edge to edge, every painting at the same height in that row, and every
+ * one keeping its true proportions — nothing is cropped (§2).
+ *
+ * The maths, which is why this needs no JavaScript at all:
+ *   flex-basis: r * H   and   flex-grow: r
+ * For a line with free space F, each item ends at
+ *   r*H + r*F/Σr = r * (H + F/Σr)
+ * so every width is exactly proportional to its aspect ratio, which means the
+ * whole row shares one height and fills the line precisely. The gap is taken
+ * out of F first and does not disturb the proportion.
+ *
+ * --r is the painting's width/height, set per card. --rowh is the target row
+ * height, so rows get taller on bigger screens.
+ */
 .grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
   gap: var(--gap);
-  grid-auto-rows: 4px;
   padding-bottom: 24px;
+  --rowh: 190px;
 }
 @media (min-width: 640px) {
   .grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    --rowh: 240px;
   }
 }
-/* A fourth column on a wide screen. Fewer rows means a small collection fits
-   under the fixed chrome without scrolling, and a large one shows more per
-   screen. Cards stay ~280px, which still reads as a painting. */
 @media (min-width: 1280px) {
   .grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    --rowh: 280px;
   }
 }
-/*
- * Visibility must NEVER depend on JavaScript.
- *
- * This was previously opacity:0 until an IntersectionObserver added a class,
- * which deadlocked on phones: a card has no height until the row-span pass
- * runs, and a zero-height element may never report as intersecting, so it was
- * never revealed — an entirely blank gallery with the images serving fine.
- *
- * A plain CSS animation with fill-mode `both` ends visible on its own, so the
- * worst case is "no animation", never "no gallery".
- */
+/* Without this the final row stretches its few items across the full width,
+   which looks broken. A greedy invisible item soaks up the slack instead, so
+   the last row keeps its natural size. */
+.grid::after {
+  content: "";
+  flex-grow: 1000000;
+}
+
 .card {
   display: block;
-  /*
-   * Fallback height until the row-span pass measures the real one; without it
-   * grid-auto-rows:4px collapses every unmeasured card to 4px.
-   *
-   * The span count is NOT the pixel height — each step adds a 4px row AND a
-   * gap. Desktop: 17*4 + 16*22 = 420px. Mobile: 17*4 + 16*14 = 292px. The
-   * previous value of 60 worked out at 1538px per card, which stacked into a
-   * page several screens tall for a handful of paintings.
-   */
-  grid-row: span 17;
+  flex-grow: var(--r, 1);
+  flex-basis: calc(var(--r, 1) * var(--rowh));
+  /* Stops a very wide painting from collapsing to a sliver on a phone. */
+  min-width: 120px;
   animation: cardRise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   animation-delay: calc(var(--i, 0) * 55ms);
 }

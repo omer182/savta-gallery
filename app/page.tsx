@@ -1,6 +1,6 @@
 import Link from "next/link";
 import s from "@/components/gallery.module.css";
-import { Masonry, Reveal } from "@/components/Masonry";
+import { Mosaic, Tile } from "@/components/Mosaic";
 import { PaintingCard } from "@/components/PaintingCard";
 import { PublicShell } from "@/components/PublicShell";
 import { toCardView } from "@/lib/cardView";
@@ -56,13 +56,16 @@ export default async function Home({
           <div className={s.empty}>אין כאן ציורים עדיין.</div>
         ) : (
           <>
-            <Masonry>
-              {items.map((p, i) => (
-                <Reveal key={p.publicId} index={i}>
-                  <PaintingCard p={toCardView(p)} priority={i < 4} />
-                </Reveal>
-              ))}
-            </Masonry>
+            <Mosaic>
+              {items.map((p, i) => {
+                const view = toCardView(p);
+                return (
+                  <Tile key={p.publicId} index={i} ratio={view.ratio}>
+                    <PaintingCard p={view} priority={i < 4} />
+                  </Tile>
+                );
+              })}
+            </Mosaic>
             {(hasMore || page > 1) && (
               <div className={s.more}>
                 {page > 1 && (

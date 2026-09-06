@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import g from "@/components/gallery.module.css";
-import { Masonry, Reveal } from "@/components/Masonry";
+import { Mosaic, Tile } from "@/components/Mosaic";
 import { PaintingCard } from "@/components/PaintingCard";
 import type { CardView } from "@/lib/cardView";
 import s from "./page.module.css";
@@ -90,13 +90,13 @@ export function SearchClient({ initialQuery }: { initialQuery: string }) {
         ) : items.length === 0 ? (
           <div className={g.empty}>לא נמצאו ציורים. נסו מילה אחרת.</div>
         ) : (
-          <Masonry>
+          <Mosaic>
             {items.map((p, i) => (
-              <Reveal key={p.publicId} index={i}>
+              <Tile key={p.publicId} index={i} ratio={p.ratio}>
                 <PaintingCard p={p} />
-              </Reveal>
+              </Tile>
             ))}
-          </Masonry>
+          </Mosaic>
         )}
       </div>
     </div>
