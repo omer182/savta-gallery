@@ -126,53 +126,46 @@
 
 /* ---------------- mosaic ---------------- */
 /*
- * Justified rows, the way paintings are actually hung: each row runs flush
- * from edge to edge, every painting at the same height in that row, and every
- * one keeping its true proportions — nothing is cropped (§2).
+ * Column mosaic: a fixed number of equal-width columns, tiles staggering
+ * because each keeps its own proportions. 2 on phones, 3 on tablets, 4 on
+ * desktop.
  *
- * The maths, which is why this needs no JavaScript at all:
- *   flex-basis: r * H   and   flex-grow: r
- * For a line with free space F, each item ends at
- *   r*H + r*F/Σr = r * (H + F/Σr)
- * so every width is exactly proportional to its aspect ratio, which means the
- * whole row shares one height and fills the line precisely. The gap is taken
- * out of F first and does not disturb the proportion.
+ * Built on grid row-spans rather than CSS `columns`, which fills column 1 top
+ * to bottom before starting column 2 and would scramble sort_order (§2). Here
+ * DOM order stays reading order, right to left under RTL.
  *
- * --r is the painting's width/height, set per card. --rowh is the target row
- * height, so rows get taller on bigger screens.
+ * A span is computed from each tile's measured height in Mosaic.tsx. That
+ * needs the column width, which is not knowable server-side, so this is the
+ * one layout that genuinely requires JavaScript — native CSS masonry is not
+ * shipped. The fallback below keeps a script failure survivable.
  */
 .grid {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--gap);
+  grid-auto-rows: 4px;
   padding-bottom: 24px;
-  --rowh: 190px;
 }
 @media (min-width: 640px) {
   .grid {
-    --rowh: 240px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
-@media (min-width: 1280px) {
+@media (min-width: 1024px) {
   .grid {
-    --rowh: 280px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
-}
-/* Without this the final row stretches its few items across the full width,
-   which looks broken. A greedy invisible item soaks up the slack instead, so
-   the last row keeps its natural size. */
-.grid::after {
-  content: "";
-  flex-grow: 1000000;
 }
 
 .card {
   display: block;
-  flex-grow: var(--r, 1);
-  flex-basis: calc(var(--r, 1) * var(--rowh));
-  /* Stops a very wide painting from collapsing to a sliver on a phone. */
-  min-width: 120px;
+  /*
+   * Fallback until the span pass runs. A span is not a pixel count — each step
+   * adds a 4px row AND a gap — so 17 is 17*4 + 16*22 = 420px on desktop and
+   * 292px on mobile, roughly a real tile. If the script never runs the gallery
+   * degrades to plain even columns, never to a blank page.
+   */
+  grid-row: span 17;
   animation: cardRise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   animation-delay: calc(var(--i, 0) * 55ms);
 }
