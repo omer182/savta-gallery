@@ -139,6 +139,14 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+/* A fourth column on a wide screen. Fewer rows means a small collection fits
+   under the fixed chrome without scrolling, and a large one shows more per
+   screen. Cards stay ~280px, which still reads as a painting. */
+@media (min-width: 1280px) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
 /*
  * Visibility must NEVER depend on JavaScript.
  *
@@ -152,9 +160,16 @@
  */
 .card {
   display: block;
-  /* Fallback height until the row-span pass measures the real one; without it
-     grid-auto-rows:4px collapses every unmeasured card to 4px. */
-  grid-row: span 60;
+  /*
+   * Fallback height until the row-span pass measures the real one; without it
+   * grid-auto-rows:4px collapses every unmeasured card to 4px.
+   *
+   * The span count is NOT the pixel height — each step adds a 4px row AND a
+   * gap. Desktop: 17*4 + 16*22 = 420px. Mobile: 17*4 + 16*14 = 292px. The
+   * previous value of 60 worked out at 1538px per card, which stacked into a
+   * page several screens tall for a handful of paintings.
+   */
+  grid-row: span 17;
   animation: cardRise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   animation-delay: calc(var(--i, 0) * 55ms);
 }
