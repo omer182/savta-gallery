@@ -142,7 +142,14 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--gap);
+  /*
+   * Asymmetric gutters: the vertical gap is roughly twice the horizontal.
+   * A uniform gap reads as a contact sheet; giving each row more air above and
+   * below is what makes a wall of paintings feel hung rather than tiled. The
+   * placard sits in that vertical space, so it needs the room anyway.
+   */
+  column-gap: var(--gap);
+  row-gap: calc(var(--gap) * 2);
   grid-auto-rows: 4px;
   padding-bottom: 24px;
 }
