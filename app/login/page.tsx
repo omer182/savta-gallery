@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import a from "@/app/admin/admin.module.css";
 import s from "./login.module.css";
 
@@ -13,6 +13,24 @@ export default function LoginPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  /*
+   * Until React has hydrated, this form is just HTML: tapping the button does a
+   * native GET to /login?, the page reloads, and the password is lost — which
+   * looks exactly like the login silently refusing to work. On a phone loading
+   * a dev bundle over WiFi that window is seconds long, and it is the failure
+   * actually observed in the server log.
+   *
+   * The button is therefore inert until the handler is genuinely attached.
+   */
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    // Next tick, not synchronously in the effect body: the point is only to
+    // observe that hydration has happened, and this keeps the set out of the
+    // effect's synchronous path.
+    const id = setTimeout(() => setReady(true), 0);
+    return () => clearTimeout(id);
+  }, []);
 
   async function submit(e?: React.FormEvent | React.KeyboardEvent) {
     e?.preventDefault();
@@ -77,7 +95,13 @@ export default function LoginPage() {
       <h1 className={a.h1}>כניסה</h1>
       <p className={a.lede}>הזינו את הסיסמה כדי להוסיף ציורים.</p>
 
-      <form onSubmit={submit}>
+      <form
+        onSubmit={submit}
+        /* Belt to the braces above: even if a native submit slips through, it
+           must never put the password in a URL. */
+        method="post"
+        action="/login"
+      >
         {error && <div className={`${a.note} ${a.error}`}>{error}</div>}
         <div className={a.field}>
           <label className={a.label} htmlFor="pw">
@@ -98,13 +122,13 @@ export default function LoginPage() {
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
-                if (!busy) void submit(e);
+                if (ready && !busy) void submit(e);
               }
             }}
           />
         </div>
-        <button className={a.btn} type="submit" disabled={busy}>
-          {busy ? "רגע…" : "כניסה"}
+        <button className={a.btn} type="submit" disabled={busy || !ready}>
+          {busy ? "רגע…" : ready ? "כניסה" : "טוען…"}
         </button>
       </form>
 
