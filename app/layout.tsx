@@ -77,8 +77,25 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="he" dir="rtl" className={`${frank.variable} ${assistant.variable}`}>
-      <body>
+    /*
+     * suppressHydrationWarning on <html> and <body> only.
+     *
+     * Browsers and extensions inject attributes onto these two elements before
+     * React hydrates — Chrome for iOS adds __gcrremoteframetoken, password
+     * managers and translators add their own — and React then reports a
+     * mismatch for markup we never wrote and cannot control.
+     *
+     * The flag applies to the element it is on, one level deep. Real mismatches
+     * inside the app still surface, so this hides third-party noise rather than
+     * our own bugs.
+     */
+    <html
+      lang="he"
+      dir="rtl"
+      className={`${frank.variable} ${assistant.variable}`}
+      suppressHydrationWarning
+    >
+      <body suppressHydrationWarning>
         {process.env.AUTH_DEBUG === "1" && (
           // biome-ignore lint: deliberate classic script, see CLIENT_PROBE
           <script dangerouslySetInnerHTML={{ __html: CLIENT_PROBE }} />
