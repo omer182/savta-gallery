@@ -1,5 +1,5 @@
 import g from "@/components/gallery.module.css";
-import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
+import { PublicShell } from "@/components/PublicShell";
 import { SearchClient } from "./SearchClient";
 
 export const metadata = { title: "חיפוש" };
@@ -12,12 +12,10 @@ export default async function SearchPage({
   const { q } = await searchParams;
 
   return (
-    <>
-      <SiteHeader current="search" />
-      <main className={g.wrap}>
+    <PublicShell current="search">
+      <div className={g.wrap}>
         <SearchClient initialQuery={q ?? ""} />
-      </main>
-      <SiteFooter />
-    </>
+      </div>
+    </PublicShell>
   );
 }

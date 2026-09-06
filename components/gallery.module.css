@@ -132,7 +132,7 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--gap);
   grid-auto-rows: 4px;
-  padding-bottom: 70px;
+  padding-bottom: 24px;
 }
 @media (min-width: 640px) {
   .grid {
@@ -255,7 +255,7 @@
 .more {
   display: flex;
   justify-content: center;
-  padding-bottom: 80px;
+  padding-bottom: 28px;
 }
 .moreLink {
   font-size: 14px;
@@ -268,19 +268,12 @@
   border-bottom-color: var(--ink);
 }
 /*
- * Pinned to the viewport, so it is on screen without scrolling to the end of
- * a long gallery. Kept slim for the same reason — a permanently visible band
- * is height the paintings do not get.
- *
- * No body padding is needed to clear it: every page that renders this footer
- * already ends with 70–80px of bottom padding.
+ * A flex row of the shell rather than an overlay, so it needs no clearance
+ * padding and can never sit on top of the last painting. Kept slim: a
+ * permanently visible band is height the paintings do not get.
  */
 .footer {
-  position: fixed;
-  inset-inline: 0;
-  bottom: 0;
-  z-index: 20;
-  background: var(--paper);
+  flex: 0 0 auto;
   border-top: 1px solid var(--line);
   padding: 11px var(--pad);
   padding-bottom: calc(11px + env(safe-area-inset-bottom, 0px));
@@ -305,3 +298,30 @@
   border-bottom-color: var(--line);
 }
 
+
+/* ================= app shell =================
+ * Chrome is fixed and only the art scrolls: the artist name, the nav and the
+ * footer stay put while the grid moves underneath them.
+ *
+ * 100dvh, not 100vh — on iOS the dynamic viewport unit accounts for Safari's
+ * collapsing toolbars, where 100vh is the TALLER measurement and would push
+ * the footer off screen exactly when it is supposed to be visible.
+ */
+.shell {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.shellHead {
+  flex: 0 0 auto;
+}
+/* The only scrolling region on the page. min-height:0 is required or a flex
+   child refuses to shrink below its content and the whole shell scrolls. */
+.shellScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}

@@ -2,7 +2,7 @@ import Link from "next/link";
 import s from "@/components/gallery.module.css";
 import { Masonry, Reveal } from "@/components/Masonry";
 import { PaintingCard } from "@/components/PaintingCard";
-import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
+import { PublicShell } from "@/components/PublicShell";
 import { toCardView } from "@/lib/cardView";
 import { countPublished, listPublished, listTagsInUse } from "@/lib/queries";
 
@@ -26,9 +26,8 @@ export default async function Home({
   const tagHref = (slug?: string) => (slug ? `/?tag=${encodeURIComponent(slug)}` : "/");
 
   return (
-    <>
-      <SiteHeader current="gallery" count={total} />
-      <main className={s.wrap}>
+    <PublicShell current="gallery" count={total}>
+      <div className={s.wrap}>
         <div className={s.tagbar}>
           <div className={s.tagscroll}>
             <Link href="/" className={`${s.tag} ${!tag ? s.tagOn : ""}`}>
@@ -80,8 +79,7 @@ export default async function Home({
             )}
           </>
         )}
-      </main>
-      <SiteFooter />
-    </>
+      </div>
+    </PublicShell>
   );
 }

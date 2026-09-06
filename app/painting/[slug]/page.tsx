@@ -10,7 +10,7 @@ import { InlineAdmin } from "@/components/InlineAdmin";
 import { getSession } from "@/lib/auth";
 import g from "@/components/gallery.module.css";
 import { Placard } from "@/components/Placard";
-import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
+import { PublicShell } from "@/components/PublicShell";
 import { fallbackUrl, srcSet } from "@/lib/imageUrls";
 import { getImages, getPaintingByPublicId, getTagsFor, neighbours } from "@/lib/queries";
 import { paintingHref, paintingSlug, publicIdFromSlug } from "@/lib/slug";
@@ -118,9 +118,8 @@ export default async function PaintingPage({ params }: { params: Promise<{ slug:
     : [];
 
   return (
-    <>
-      <SiteHeader />
-      <main className={g.wrap}>
+    <PublicShell current="">
+      <div className={g.wrap}>
         <div className={s.detail}>
           <Link className={s.back} href="/">
             → חזרה לגלריה
@@ -248,8 +247,7 @@ export default async function PaintingPage({ params }: { params: Promise<{ slug:
             )}
           </div>
         </div>
-      </main>
-      <SiteFooter />
-    </>
+      </div>
+    </PublicShell>
   );
 }

@@ -1,5 +1,5 @@
 import g from "@/components/gallery.module.css";
-import { SiteFooter, SiteHeader } from "@/components/SiteHeader";
+import { PublicShell } from "@/components/PublicShell";
 import { getPage } from "@/lib/queries";
 import s from "./page.module.css";
 
@@ -12,9 +12,8 @@ export default async function AboutPage() {
   const paragraphs = (page?.body ?? "").split(/\n{2,}/).filter((p) => p.trim());
 
   return (
-    <>
-      <SiteHeader current="about" />
-      <main className={g.wrap}>
+    <PublicShell current="about">
+      <div className={g.wrap}>
         <div className={s.prose}>
           <h2>{page?.title ?? "אודות"}</h2>
           {paragraphs.length ? (
@@ -28,8 +27,7 @@ export default async function AboutPage() {
           )}
           <p className={s.note}>(הדיוקן שלה ותצלומי הסטודיו יופיעו כאן.)</p>
         </div>
-      </main>
-      <SiteFooter />
-    </>
+      </div>
+    </PublicShell>
   );
 }
