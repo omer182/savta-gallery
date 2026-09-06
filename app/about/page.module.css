@@ -1,6 +1,9 @@
+/* Wider than the 620px reading measure so a large portrait can float beside
+   the text without crushing the column: the paragraphs below keep their own
+   max-width, so the measure stays right even though the block is wide. */
 .prose {
-  max-width: 620px;
-  padding-bottom: 80px;
+  max-width: 1160px;
+  padding-bottom: 40px;
   padding-top: 34px;
 }
 .prose h2 {
@@ -16,6 +19,8 @@
   line-height: 1.85;
   color: var(--ink-soft);
   margin: 0 0 1.05em;
+  /* Reading measure, independent of the wide block above. */
+  max-width: 620px;
 }
 .note {
   font-family: var(--sans) !important;
@@ -30,15 +35,23 @@
    inline-start here would put it on the right, against the reading edge. On a
    phone it stops floating so her face leads the page. */
 .portrait {
-  margin: 0 0 24px;
-  width: min(240px, 45%);
+  margin: 0 0 28px;
+  width: min(480px, 42%);
   float: inline-end;
-  margin-inline-start: 26px;
+  margin-inline-start: 34px;
 }
-@media (max-width: 560px) {
+/* Between the two, a 480px portrait would leave no usable column, so it steps
+   down before it stops floating. */
+@media (max-width: 1000px) {
+  .portrait {
+    width: min(320px, 40%);
+    margin-inline-start: 26px;
+  }
+}
+@media (max-width: 620px) {
   .portrait {
     float: none;
-    width: min(220px, 70%);
+    width: min(300px, 78%);
     margin-inline: 0 auto;
   }
 }
