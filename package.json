@@ -17,7 +17,8 @@
     "icons": "tsx scripts/icons.ts",
     "import": "tsx scripts/import.ts",
     "test:session": "tsx scripts/make-test-session.ts",
-    "build:scripts": "node scripts/build-scripts.mjs"
+    "build:scripts": "node scripts/build-scripts.mjs",
+    "db:seed-about": "tsx scripts/seed-about.ts"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.0",

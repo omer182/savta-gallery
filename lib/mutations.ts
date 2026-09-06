@@ -1,5 +1,5 @@
-import { and, eq, inArray, isNull, lt, sql } from "drizzle-orm";
-import { db, images, paintings, paintingTags, tags } from "@/db";
+import { and, eq, inArray, isNotNull, isNull, lt, notInArray, sql } from "drizzle-orm";
+import { db, images, pages, paintings, paintingTags, tags } from "@/db";
 import { newPublicId, slugifyTitle } from "./slug";
 
 export type PaintingInput = {
@@ -120,11 +120,26 @@ export function deletePainting(id: number) {
 /**
  * Uploads that were never saved leave orphan image rows. Swept on admin load
  * rather than by a cron, since this is the only place that notices.
+ *
+ * A page portrait is deliberately an image with no painting, so it looks
+ * exactly like an abandoned upload — without the notInArray guard the sweep
+ * would delete her portrait a day after it was added.
  */
 export function sweepOrphanImages(olderThanHours = 24) {
   const cutoff = Math.floor(Date.now() / 1000) - olderThanHours * 3600;
+
+  const referenced = db
+    .select({ id: pages.portraitImageId })
+    .from(pages)
+    .where(isNotNull(pages.portraitImageId))
+    .all()
+    .map((r) => r.id)
+    .filter((id): id is number => id !== null);
+
+  const orphaned = and(isNull(images.paintingId), lt(images.createdAt, cutoff));
+
   return db
     .delete(images)
-    .where(and(isNull(images.paintingId), lt(images.createdAt, cutoff)))
+    .where(referenced.length ? and(orphaned, notInArray(images.id, referenced)) : orphaned)
     .run();
 }

@@ -1,0 +1,1 @@
+ALTER TABLE `pages` ADD `portrait_image_id` integer REFERENCES images(id);

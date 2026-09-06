@@ -25,3 +25,49 @@
   margin-top: 26px !important;
   line-height: 1.6 !important;
 }
+
+/* Floats to the LEFT of the text. Under dir="rtl" that is inline-END — using
+   inline-start here would put it on the right, against the reading edge. On a
+   phone it stops floating so her face leads the page. */
+.portrait {
+  margin: 0 0 24px;
+  width: min(240px, 45%);
+  float: inline-end;
+  margin-inline-start: 26px;
+}
+@media (max-width: 560px) {
+  .portrait {
+    float: none;
+    width: min(220px, 70%);
+    margin-inline: 0 auto;
+  }
+}
+.portraitFrame {
+  background: #fff;
+  padding: 8px;
+  box-shadow: var(--sh-frame);
+}
+/* Placeholder until a portrait is uploaded: a warm empty mat with her initial,
+   rather than a grey box or a broken image. */
+.portraitEmpty {
+  aspect-ratio: 4 / 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #efe9dc, #e6dfd0);
+}
+.portraitMark {
+  font-family: var(--serif);
+  font-size: 64px;
+  font-weight: 500;
+  color: #c4b89f;
+  line-height: 1;
+}
+.portraitCaption {
+  margin-top: 9px;
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 300;
+  color: var(--muted);
+  text-align: start;
+}

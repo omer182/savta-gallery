@@ -163,6 +163,16 @@ export const pages = sqliteTable("pages", {
   slug: text("slug").primaryKey(),
   title: text("title").notNull(),
   body: text("body").notNull().default(""),
+
+  /**
+   * Her portrait. An image row that belongs to no painting, so the orphan
+   * sweep must skip anything referenced here or it would delete the portrait
+   * a day after it was uploaded.
+   */
+  portraitImageId: integer("portrait_image_id").references(() => images.id, {
+    onDelete: "set null",
+  }),
+
   updatedAt: integer("updated_at").notNull().default(sql`(unixepoch())`),
 });
 

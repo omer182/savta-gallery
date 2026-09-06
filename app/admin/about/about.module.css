@@ -1,0 +1,58 @@
+.portraitRow {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+.portraitFrame {
+  flex: 0 0 140px;
+  width: 140px;
+  background: #fff;
+  padding: 7px;
+  box-shadow: var(--sh-frame);
+}
+.portraitImg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.portraitEmpty {
+  aspect-ratio: 4 / 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #efe9dc, #e6dfd0);
+}
+.portraitMark {
+  font-family: var(--serif);
+  font-size: 44px;
+  font-weight: 500;
+  color: #c4b89f;
+  line-height: 1;
+}
+.portraitActions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+.portraitBtn {
+  padding: 11px 18px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: var(--placard);
+  color: var(--umber);
+  font-size: 15px;
+}
+.portraitBtn:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+.portraitBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+@media (max-width: 520px) {
+  .portraitRow {
+    flex-direction: column;
+  }
+}
