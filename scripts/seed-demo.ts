@@ -11,8 +11,9 @@
  * DB (derived hash, thumbhash, intrinsic size) is genuinely what the gallery
  * will get on the day.
  *
- *   npm run db:seed-demo           add the demo paintings
- *   npm run db:seed-demo -- --clear   remove them again
+ *   npm run db:seed-demo                 add the demo paintings
+ *   npm run db:seed-demo -- --count 120  as many as you like, for paging
+ *   npm run db:seed-demo -- --clear      remove them again
  *
  * Every row is tagged provenanceNote = "demo-seed", which is how --clear finds
  * them, so real paintings entered by hand are never touched.
@@ -21,9 +22,17 @@ import { eq } from "drizzle-orm";
 import sharp from "sharp";
 import { db, images, paintings, paintingTags, tags } from "@/db";
 import { generateDerivatives, storeOriginal } from "@/lib/images";
+import { PAGE_SIZE } from "@/lib/queries";
 import { newPublicId, slugifyTitle } from "@/lib/slug";
 
 const MARKER = "demo-seed";
+
+/**
+ * Hebrew ordinals, for the repeats past the first pass through the catalogue.
+ * A painter really does return to the same subject, so "ברושים ג׳" is how the
+ * third of them would actually be listed.
+ */
+const ORDINALS = ["", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ז׳", "ח׳", "ט׳", "י׳"];
 
 /* ------------------------------------------------------------------ *
  * The paintings
@@ -190,7 +199,15 @@ async function clear() {
   console.log("derivative files are left on disk; the orphan sweep collects them");
 }
 
+/** `--count N`, default one pass through the catalogue. */
+function wantedCount() {
+  const i = process.argv.indexOf("--count");
+  const n = i >= 0 ? Number(process.argv[i + 1]) : NaN;
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : DEMO.length;
+}
+
 async function seed() {
+  const count = wantedCount();
   const existing = db
     .select({ id: paintings.id })
     .from(paintings)
@@ -217,10 +234,20 @@ async function seed() {
     tagId.set(name, row!.id);
   }
 
-  for (const [i, d] of DEMO.entries()) {
+  for (let i = 0; i < count; i++) {
+    const d = DEMO[i % DEMO.length]!;
+    const pass = Math.floor(i / DEMO.length);
+
+    // Past the first pass the catalogue repeats, so vary both the name and the
+    // proportions - a wall of the same 24 shapes tells you nothing about how a
+    // real archive tiles.
+    const title = pass === 0 ? d.title : `${d.title} ${ORDINALS[pass % ORDINALS.length]}`;
+    const ratio = pass === 0 ? d.ratio : d.ratio * (0.82 + ((pass * 37) % 45) / 100);
+    const year = d.year + (pass % 4);
+
     // Wide enough that the 1600px derivative is real work, not an upscale.
     const w = 1800;
-    const h = Math.round(w * d.ratio);
+    const h = Math.round(w * ratio);
     const jpeg = await sharp(Buffer.from(paint(w, h, d.kind, i * 7919 + 13)))
       .jpeg({ quality: 86 })
       .toBuffer();
@@ -232,12 +259,12 @@ async function seed() {
       .insert(paintings)
       .values({
         publicId: newPublicId(),
-        title: d.title,
-        year: d.year,
+        title,
+        year,
         medium: d.medium,
         // Plausible physical sizes that agree with the image proportions.
         widthCm: 90,
-        heightCm: Math.round(90 * d.ratio),
+        heightCm: Math.round(90 * ratio),
         story: d.story,
         status: "published",
         provenance: "artist",
@@ -267,10 +294,10 @@ async function seed() {
       db.insert(paintingTags).values({ paintingId: p!.id, tagId: tagId.get(t)! }).run();
     }
 
-    process.stdout.write(`  ${String(i + 1).padStart(2)}/${DEMO.length}  ${d.title}\n`);
+    console.log(`  ${String(i + 1).padStart(3)}/${count}  ${title}`);
   }
 
-  console.log(`\nseeded ${DEMO.length} demo paintings, ratios ${Math.min(...DEMO.map((d) => d.ratio))}–${Math.max(...DEMO.map((d) => d.ratio))}`);
+  console.log(`\nseeded ${count} demo paintings; the gallery pages at ${PAGE_SIZE}`);
 }
 
 const run = process.argv.includes("--clear") ? clear : seed;

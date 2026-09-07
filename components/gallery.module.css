@@ -435,6 +435,21 @@
   color: var(--ink);
   border-bottom-color: var(--ink);
 }
+/*
+ * The trigger for the next page. It sits at the foot of the wall and is
+ * watched with a wide margin, so the next paintings are usually already in
+ * place by the time the bottom of the current page is reached.
+ */
+.sentinel {
+  height: 1px;
+  margin-top: -1px;
+  pointer-events: none;
+}
+.moreNote {
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--muted);
+}
 
 /* ======================================================================
  * Footer

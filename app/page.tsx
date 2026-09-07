@@ -1,7 +1,6 @@
 import Link from "next/link";
+import { GalleryFeed } from "@/components/GalleryFeed";
 import s from "@/components/gallery.module.css";
-import { Mosaic, Tile } from "@/components/Mosaic";
-import { PaintingCard } from "@/components/PaintingCard";
 import { PublicShell } from "@/components/PublicShell";
 import { toCardView } from "@/lib/cardView";
 import { countPublished, listPublished, listTagsInUse } from "@/lib/queries";
@@ -55,39 +54,17 @@ export default async function Home({
         {items.length === 0 ? (
           <div className={s.empty}>אין כאן ציורים עדיין.</div>
         ) : (
-          <>
-            <Mosaic>
-              {items.map((p, i) => {
-                const view = toCardView(p);
-                return (
-                  <Tile key={p.publicId} index={i} ratio={view.ratio}>
-                    <PaintingCard p={view} priority={i < 4} />
-                  </Tile>
-                );
-              })}
-            </Mosaic>
-            {(hasMore || page > 1) && (
-              <div className={s.more}>
-                {page > 1 && (
-                  <Link
-                    className={s.moreLink}
-                    href={`${tagHref(tag)}${tag ? "&" : "?"}page=${page - 1}`}
-                  >
-                    עמוד קודם
-                  </Link>
-                )}
-                {hasMore && (
-                  <Link
-                    className={s.moreLink}
-                    href={`${tagHref(tag)}${tag ? "&" : "?"}page=${page + 1}`}
-                    style={{ marginInlineStart: page > 1 ? 24 : 0 }}
-                  >
-                    עוד ציורים
-                  </Link>
-                )}
-              </div>
-            )}
-          </>
+          /*
+           * Keyed by tag so switching filters starts a fresh wall rather than
+           * appending the new tag's first page onto the old tag's results.
+           */
+          <GalleryFeed
+            key={tag ?? "all"}
+            initialItems={items.map(toCardView)}
+            initialHasMore={hasMore}
+            initialPage={page}
+            tag={tag}
+          />
         )}
       </div>
     </PublicShell>

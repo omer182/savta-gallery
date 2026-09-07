@@ -35,7 +35,7 @@ const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : us
 export function Mosaic({ children }: { children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
 
-  const layout = useCallback(() => {
+  const measure = useCallback(() => {
     const grid = ref.current;
     if (!grid) return;
 
@@ -43,28 +43,51 @@ export function Mosaic({ children }: { children: ReactNode }) {
     // The resolved row height, never the `gap` shorthand - reading the
     // shorthand off a computed style is what broke this the first time.
     const row = parseFloat(cs.gridAutoRows) || 4;
+    const cards = Array.from(grid.children) as HTMLElement[];
+
+    /*
+     * Every read, then every write. Interleaving them makes the browser flush
+     * layout on each card in turn, and the gallery grows to ~500 tiles as she
+     * scrolls - at that size the difference is between imperceptible and a
+     * visible stall on each new page.
+     *
+     * align-self:start keeps a card's height its content height even once a
+     * span is set, so re-measuring is stable rather than self-reinforcing.
+     */
+    const heights = cards.map((c) => c.getBoundingClientRect().height);
 
     let measured = false;
-    for (const card of Array.from(grid.children) as HTMLElement[]) {
-      // align-self:start keeps this the content height even once a span is
-      // set, so re-measuring is stable rather than self-reinforcing.
-      const h = card.getBoundingClientRect().height;
-      if (h <= 0) continue; // not laid out yet; a later observer pass catches it
+    cards.forEach((card, i) => {
+      const h = heights[i] ?? 0;
+      if (h <= 0) return; // not laid out yet; a later observer pass catches it
       card.style.setProperty("--span", String(Math.ceil((h + GUTTER) / row)));
       measured = true;
-    }
+    });
 
     // Only switch to masonry once something actually measured, so a pass that
     // runs too early can never collapse every tile to a single row.
     if (measured) grid.classList.add(s.laid);
   }, []);
 
+  /*
+   * Appending a page resizes the grid and every tile in it, so the observer
+   * below can fire hundreds of times for one batch. Coalesce to one pass per
+   * frame.
+   */
+  const frame = useRef(0);
+  const layout = useCallback(() => {
+    cancelAnimationFrame(frame.current);
+    frame.current = requestAnimationFrame(measure);
+  }, [measure]);
+
   // Before paint, so the first frame is already the mosaic. This does not run
   // on the server, so the SSR markup stays the plain grid - which is exactly
   // the intended no-script rendering.
   useIsomorphicLayoutEffect(() => {
-    layout();
-  }, [layout, children]);
+    // Synchronous, not the coalesced version: the first painted frame has to
+    // be the mosaic already, not an even grid corrected one frame later.
+    measure();
+  }, [measure, children]);
 
   useEffect(() => {
     // Heights settle after mount: the blur-up swaps in the real image, and the
@@ -80,6 +103,7 @@ export function Mosaic({ children }: { children: ReactNode }) {
 
     return () => {
       ro.disconnect();
+      cancelAnimationFrame(frame.current);
       window.removeEventListener("resize", layout);
     };
   }, [layout, children]);
