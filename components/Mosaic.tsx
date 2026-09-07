@@ -1,76 +1,70 @@
-"use client";
-
-import { type ReactNode, useCallback, useEffect, useRef } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import s from "./gallery.module.css";
 
 /**
- * Column mosaic — fixed columns, staggered tiles.
+ * The mosaic.
  *
- * Each tile's measured height becomes a grid row-span, so tiles of different
- * proportions interlock instead of sitting in uniform rows. Deliberately not
- * CSS `columns`, which fills one column top to bottom before starting the
- * next and would scramble sort_order (§2); here DOM order stays reading order.
+ * There is no JavaScript here on purpose. A tile height is the column width
+ * times the aspect ratio of the painting, and the CSS in gallery.module.css
+ * gets the column width from container query units — so the only thing the
+ * server has to supply is the ratio, as a row span.
  *
- * This is the one layout that genuinely needs JavaScript: a span depends on
- * the tile's height in pixels, which depends on the column width, which is not
- * knowable server-side — and native CSS masonry is not shipped. The CSS
- * fallback (see .card) degrades to plain even columns if this never runs, so
- * the gallery can never come out blank.
+ * The consequence is that the wall is correct in the very first paint: no
+ * measure-then-reflow, nothing to go wrong before hydration, and it stays
+ * correct through a window resize or a column-count change without a single
+ * line of script.
+ *
+ * The extra <div> is not decorative — container query units resolve against
+ * the nearest ANCESTOR container, so the grid cannot be its own container.
  */
 export function Mosaic({ children }: { children: ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  const layout = useCallback(() => {
-    const grid = ref.current;
-    if (!grid) return;
-
-    const cs = getComputedStyle(grid);
-    const gap = parseFloat(cs.rowGap) || 0;
-    const row = parseFloat(cs.gridAutoRows) || 1;
-
-    for (const card of Array.from(grid.children) as HTMLElement[]) {
-      const inner = card.firstElementChild as HTMLElement | null;
-      if (!inner) continue;
-      const h = inner.getBoundingClientRect().height;
-      if (h <= 0) continue; // not laid out yet; a later observer pass will catch it
-      card.style.gridRowEnd = `span ${Math.max(1, Math.ceil((h + gap) / (row + gap)))}`;
-    }
-  }, []);
-
-  useEffect(() => {
-    layout();
-
-    // Heights settle after mount: the blur-up swaps in the real image, fonts
-    // load and reflow the placard. Remeasure on any of it rather than once.
-    const ro = new ResizeObserver(layout);
-    const grid = ref.current;
-    if (grid) {
-      ro.observe(grid);
-      for (const c of Array.from(grid.children)) {
-        const inner = c.firstElementChild;
-        if (inner) ro.observe(inner);
-      }
-    }
-    window.addEventListener("resize", layout);
-    document.fonts?.ready.then(layout).catch(() => {});
-
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", layout);
-    };
-  }, [layout, children]);
-
   return (
-    <div className={s.grid} ref={ref}>
-      {children}
+    <div className={s.mosaic}>
+      <div className={s.grid}>{children}</div>
     </div>
   );
 }
 
-/** One tile. `index` only drives the staggered entry animation. */
-export function Tile({ children, index }: { children: ReactNode; index: number; ratio?: number }) {
+/**
+ * The vertical gutter, in grid rows.
+ *
+ * One row is 1% of a column width, so this is the row form of --gut-f in
+ * gallery.module.css — KEEP THE TWO IN SYNC (0.06 there, 6 here).
+ *
+ * It is reserved inside each span instead of being a row-gap: with a real
+ * row-gap an N-row span would also pick up N-1 gaps, and a tile height would
+ * stop being a clean multiple of the row unit.
+ */
+const GUTTER_ROWS = 6;
+
+/**
+ * One tile.
+ *
+ * `ratio` is height / width, and it must be the SAME number the image inside
+ * sizes its box from, or the tile the mosaic reserves will not match what gets
+ * drawn in it and the columns will collide. toCardView guards the value; a
+ * painting is never cropped to fit a tile.
+ *
+ * `index` only drives the staggered entry animation.
+ */
+export function Tile({
+  children,
+  index,
+  ratio = 1,
+}: {
+  children: ReactNode;
+  index: number;
+  ratio?: number;
+}) {
+  const r = Number.isFinite(ratio) && ratio > 0 ? ratio : 1;
+
   return (
-    <div className={s.card} style={{ "--i": index % 12 } as React.CSSProperties}>
+    <div
+      className={s.card}
+      style={
+        { "--i": index % 12, "--span": Math.round(r * 100) + GUTTER_ROWS } as CSSProperties
+      }
+    >
       {children}
     </div>
   );

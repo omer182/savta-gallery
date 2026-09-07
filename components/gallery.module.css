@@ -1,5 +1,9 @@
-/* Public gallery chrome — PLAN.md §2. All layout uses logical properties so
-   nothing is pinned to a physical side under dir="rtl". */
+/*
+ * Public gallery — PLAN.md §2.
+ *
+ * Everything here uses logical properties (inline-start/end, padding-inline)
+ * so nothing is pinned to a physical side under dir="rtl".
+ */
 
 .wrap {
   max-width: var(--maxw);
@@ -7,14 +11,46 @@
   padding-inline: var(--pad);
 }
 
-/* ---------------- header ---------------- */
+/* ======================================================================
+ * App shell — fixed chrome, scrolling art
+ *
+ * The artist name, the nav and the footer stay put; only the paintings move
+ * underneath them.
+ *
+ * 100dvh, not 100vh: on iOS the dynamic viewport unit tracks Safari's
+ * collapsing toolbars, where 100vh is the TALLER measurement and would push
+ * the footer off screen exactly when it is meant to be visible.
+ * ==================================================================== */
+.shell {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.shellHead {
+  flex: 0 0 auto;
+}
+/* The one scrolling region on the page. min-height:0 is load-bearing — a flex
+   child otherwise refuses to shrink below its content and the whole shell
+   scrolls instead. */
+.shellScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* ======================================================================
+ * Header
+ * ==================================================================== */
 .head {
-  padding-block: clamp(30px, 7vw, 56px) clamp(20px, 4vw, 30px);
+  padding-block: clamp(22px, 5vw, 38px) clamp(14px, 3vw, 22px);
 }
 .headRow {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
 }
 @media (min-width: 760px) {
   .headRow {
@@ -32,7 +68,7 @@
   margin: 0;
   font-family: var(--serif);
   font-weight: 600;
-  font-size: clamp(28px, 6.4vw, 44px);
+  font-size: clamp(26px, 6vw, 42px);
   line-height: 1.15;
   text-wrap: balance;
   max-width: 15ch;
@@ -42,9 +78,10 @@
     max-width: none;
   }
 }
-/* Hebrew has no uppercase, so the quiet-label hierarchy is size/weight/colour. */
+/* Hebrew has no uppercase, so the quiet-label hierarchy is built from size,
+   weight and colour rather than caps. Tracking stays under .02em. */
 .sub {
-  margin-top: 9px;
+  margin-top: 8px;
   font-size: 12.5px;
   font-weight: 300;
   letter-spacing: 0.02em;
@@ -86,9 +123,11 @@
   margin-inline: auto;
 }
 
-/* ---------------- tag strip ---------------- */
+/* ======================================================================
+ * Tag strip
+ * ==================================================================== */
 .tagbar {
-  margin-block: 26px 30px;
+  margin-block: 18px 16px;
 }
 .tagscroll {
   display: flex;
@@ -98,7 +137,7 @@
   padding-bottom: 6px;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  /* RTL: the row runs right→left, so the fade belongs at the left edge. */
+  /* RTL: the row runs right to left, so the fade belongs at the left edge. */
   mask-image: linear-gradient(to left, #000 0, #000 calc(100% - 34px), transparent 100%);
 }
 .tagscroll::-webkit-scrollbar {
@@ -124,95 +163,163 @@
   border-bottom-color: var(--ink);
 }
 
-/* ---------------- mosaic ---------------- */
-/*
- * Column mosaic: a fixed number of equal-width columns, tiles staggering
- * because each keeps its own proportions. 2 on phones, 3 on tablets, 4 on
- * desktop.
+/* ======================================================================
+ * The mosaic
  *
- * Built on grid row-spans rather than CSS `columns`, which fills column 1 top
- * to bottom before starting column 2 and would scramble sort_order (§2). Here
- * DOM order stays reading order, right to left under RTL.
+ * Fixed columns; each painting keeps its own proportions, so the tiles
+ * interlock and the bottom edge of every column lands somewhere different.
+ * Two on phones, three on tablets, four on desktop.
  *
- * A span is computed from each tile's measured height in Mosaic.tsx. That
- * needs the column width, which is not knowable server-side, so this is the
- * one layout that genuinely requires JavaScript — native CSS masonry is not
- * shipped. The fallback below keeps a script failure survivable.
- */
+ * Not CSS `columns`, which fills column 1 top to bottom before starting
+ * column 2 and would scramble sort_order (§2). Here DOM order stays reading
+ * order — right to left, then down.
+ *
+ * HOW THE TILING IS EXACT, WITH NO JAVASCRIPT
+ *
+ * A tile height is its column width times the aspect ratio of the painting.
+ * The column width is not knowable in CSS as a length... except inside a
+ * container query container, where 1cqw is 1% of the container inline size.
+ * So .mosaic is the container and .grid derives everything from it:
+ *
+ *     col = 100cqw / (n + (n - 1) * gutterFraction)
+ *
+ * Set the row unit to col/100 and a painting of ratio r needs exactly
+ * round(r * 100) rows. That integer is the SAME at every breakpoint — it is
+ * a proportion, not a pixel count — so the server computes it once from the
+ * stored image dimensions and the layout is right on the very first paint,
+ * before hydration, at any width.
+ *
+ * row-gap is 0 and the vertical gutter is instead reserved as extra rows
+ * inside each span (GUTTER_ROWS in Mosaic.tsx). With a real row-gap an N-row
+ * span would also accumulate N-1 gaps and the arithmetic above would drift.
+ *
+ * The gutter is a fraction of a column rather than a fixed pixel value, so
+ * it stays visually proportional: tight on a phone, a shade airier on a wide
+ * screen, without a single media query.
+ * ==================================================================== */
+.mosaic {
+  container-type: inline-size;
+  /* No padding: cqw resolves against the content box of this element, which
+     must therefore be exactly the width of the grid. */
+  padding: 0;
+}
+
 .grid {
+  --cols: 2;
+  /*
+   * Gutter as a fraction of one column. 0.06 is about 10px on a phone and
+   * 17px at full desktop width — enough air that each painting reads as its
+   * own object rather than one strip of a bigger picture.
+   *
+   * KEEP IN SYNC with GUTTER_ROWS in Mosaic.tsx. One row is 1% of a column,
+   * so this fraction times 100 is that row count: 0.06 -> 6.
+   */
+  --gut-f: 0.06;
+  --col: calc(100cqw / (var(--cols) + (var(--cols) - 1) * var(--gut-f)));
+
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  /* Tight and even. The paintings should sit close together — the frames and
-     placards already separate them, so a wide gutter just pushes them apart. */
-  gap: 8px;
-  grid-auto-rows: 4px;
-  padding-bottom: 24px;
+  column-gap: calc(var(--col) * var(--gut-f));
+  row-gap: 0;
+  grid-auto-rows: calc(var(--col) / 100);
+  padding-bottom: 20px;
 }
 @media (min-width: 640px) {
   .grid {
+    --cols: 3;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
   }
 }
 @media (min-width: 1024px) {
   .grid {
+    --cols: 4;
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
+/*
+ * --span is written by the server: the ratio rows plus the gutter rows, added
+ * there rather than here because `span calc(…)` is not dependable across
+ * browsers, while substituting a plain integer always is. The 106 fallback is
+ * a square plus a gutter, for a row that somehow arrives with no dimensions.
+ */
 .card {
-  display: block;
-  /*
-   * Fallback until the span pass runs. A span is not a pixel count — each step
-   * adds a 4px row AND a gap — so 17 is 17*4 + 16*12 = 260px on desktop and
-   * 196px on mobile, roughly a real tile. If the script never runs the gallery
-   * degrades to plain even columns, never to a blank page.
-   */
-  grid-row: span 17;
-  animation: cardRise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  animation-delay: calc(var(--i, 0) * 55ms);
+  grid-row-end: span var(--span, 106);
+  /* Not stretch: the box should be exactly the height of the painting, so
+     the reserved gutter rows stay genuinely empty. */
+  align-self: start;
+  animation: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 45ms);
 }
-@keyframes cardRise {
+@keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
     transform: none;
   }
 }
-.cardInner {
-  display: block;
-}
-.frame {
-  /* Must be block: it is the containing block for the absolute image layer. */
-  display: block;
-  position: relative;
-  background: #fff;
-  padding: 7px;
-  box-shadow: var(--sh-frame);
-  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s;
-}
-@media (min-width: 640px) {
-  .frame {
-    padding: 8px;
-  }
-}
-@media (hover: hover) and (pointer: fine) {
-  .card:hover .frame {
-    transform: translateY(-4px);
-    box-shadow: var(--sh-lift);
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    animation: none;
   }
 }
 
-/* ---------------- placard ---------------- */
+/*
+ * The whole tile is one <a> — keyboard reachable, cmd-clickable, crawlable,
+ * with a visible focus ring (§2). No white mat and no drop shadow: in a
+ * mosaic the paintings butt up against one another, and the frames in the
+ * photographs are the only frames there are.
+ */
+.cardInner {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  background: var(--line-soft);
+}
+.cardInner::after {
+  /* An inset hairline, so two pale paintings side by side still read as two.
+     Inset rather than a border, which would add to the tile height and break
+     the row arithmetic above. */
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 0 1px rgba(28, 26, 21, 0.07);
+  pointer-events: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .cardInner {
+    transition: filter 0.35s;
+  }
+  .cardInner:hover {
+    filter: brightness(1.04);
+  }
+}
+
+/* ======================================================================
+ * Placard
+ *
+ * The signature element, and it has to be readable without hover because the
+ * phone is the primary surface (§2). In a mosaic it cannot sit below the
+ * painting — a two-line title would add height the row arithmetic does not
+ * know about and the tiles would collide — so it lies over the foot of the
+ * painting instead.
+ *
+ * On a mouse it stays hidden until hover, which leaves a wide gallery
+ * completely clean.
+ * ==================================================================== */
 .placard {
+  text-align: start;
+}
+/* The painting page is not a mosaic tile — there the placard is a real wall
+   label on the paper, beside the work, with room to breathe. */
+.placardPlain {
   background: var(--placard);
   border: 1px solid var(--line);
   box-shadow: var(--sh-card);
-  padding: 9px 12px;
-  text-align: start;
+  padding: 12px 14px;
 }
 .placardTitle {
   font-family: var(--serif);
@@ -229,37 +336,87 @@
   color: var(--muted);
   margin-top: 3px;
 }
-.placardStatic {
-  margin-top: 9px;
-}
-.placardHover {
+
+/*
+ * Over the painting: a small paper label lying on the canvas, the same warm
+ * white as the wall label on the painting page. Not a dark scrim over the
+ * foot of the image — a scrim tints the paint itself, and the paint is the
+ * one thing on this page that has to stay true.
+ *
+ * Width shrinks to the title (only inset-inline-start and bottom are set), so
+ * on a wide landscape painting the label stays a small card in the corner
+ * rather than a band across the work.
+ *
+ * Both variants share this; only their visibility differs.
+ */
+.placardOver {
   position: absolute;
-  inset-inline-start: 13px;
-  bottom: 13px;
-  max-width: calc(100% - 26px);
-  opacity: 0;
-  transform: translateY(6px);
-  pointer-events: none;
-  transition: opacity 0.28s, transform 0.28s;
-  display: none;
+  inset-inline-start: 9px;
+  bottom: 9px;
+  max-width: calc(100% - 18px);
+  padding: 6px 9px;
+  background: var(--placard);
+  border: 1px solid var(--line);
+  box-shadow: var(--sh-card);
 }
-/* The placard is the signature element and the phone is the primary surface,
-   so on touch it is always visible below the frame rather than on hover. */
-@media (hover: hover) and (pointer: fine) and (min-width: 640px) {
-  .placardHover {
-    display: block;
+.placardOver .placardTitle {
+  font-size: 13.5px;
+  line-height: 1.3;
+  /* Two lines at most, so a long title never creeps up the painting. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.placardOver .placardMeta {
+  font-size: 11px;
+  margin-top: 2px;
+}
+@media (min-width: 640px) {
+  .placardOver {
+    inset-inline-start: 11px;
+    bottom: 11px;
+    max-width: calc(100% - 22px);
+    padding: 7px 11px;
   }
-  .card:hover .placardHover,
-  .card:focus-visible .placardHover {
-    opacity: 1;
-    transform: none;
+  .placardOver .placardTitle {
+    font-size: 15px;
   }
+  .placardOver .placardMeta {
+    font-size: 11.5px;
+  }
+}
+
+/* Touch: always on. Mouse: fades in on hover. */
+.placardStatic {
+  pointer-events: none;
+}
+@media (hover: hover) and (pointer: fine) {
   .placardStatic {
     display: none;
   }
 }
+.placardHover {
+  display: none;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.28s, transform 0.28s;
+}
+@media (hover: hover) and (pointer: fine) {
+  .placardHover {
+    display: block;
+  }
+  .cardInner:hover .placardHover,
+  .cardInner:focus-visible .placardHover {
+    opacity: 1;
+    transform: none;
+  }
+}
 
-/* ---------------- misc ---------------- */
+/* ======================================================================
+ * Empty state and pager
+ * ==================================================================== */
 .empty {
   font-family: var(--serif);
   font-size: 22px;
@@ -281,28 +438,24 @@
   color: var(--ink);
   border-bottom-color: var(--ink);
 }
-/*
+
+/* ======================================================================
+ * Footer
+ *
  * A flex row of the shell rather than an overlay, so it needs no clearance
  * padding and can never sit on top of the last painting. Kept slim: a
  * permanently visible band is height the paintings do not get.
- */
+ * ==================================================================== */
 .footer {
   flex: 0 0 auto;
   border-top: 1px solid var(--line);
-  padding: 11px var(--pad);
-  padding-bottom: calc(11px + env(safe-area-inset-bottom, 0px));
+  padding: 10px var(--pad);
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   text-align: center;
   font-size: 12.5px;
   font-weight: 300;
   color: var(--muted-lt);
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .card {
-    animation: none;
-  }
-}
-
 .footerLink {
   color: var(--muted-lt);
   border-bottom: 1px solid transparent;
@@ -310,32 +463,4 @@
 .footerLink:hover {
   color: var(--ink-soft);
   border-bottom-color: var(--line);
-}
-
-
-/* ================= app shell =================
- * Chrome is fixed and only the art scrolls: the artist name, the nav and the
- * footer stay put while the grid moves underneath them.
- *
- * 100dvh, not 100vh — on iOS the dynamic viewport unit accounts for Safari's
- * collapsing toolbars, where 100vh is the TALLER measurement and would push
- * the footer off screen exactly when it is supposed to be visible.
- */
-.shell {
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-.shellHead {
-  flex: 0 0 auto;
-}
-/* The only scrolling region on the page. min-height:0 is required or a flex
-   child refuses to shrink below its content and the whole shell scrolls. */
-.shellScroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
 }

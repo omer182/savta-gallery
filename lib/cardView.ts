@@ -25,9 +25,34 @@ export type CardView = {
   ratio: number;
 };
 
+/*
+ * A guard, not a design choice. Paintings really are sometimes long and narrow,
+ * and the mosaic is built to show that — a tall tile is the point. This only
+ * catches corrupt dimensions, which would otherwise produce a tile many screens
+ * tall and a column of dead space beside it.
+ */
+const MIN_RATIO = 0.2;
+const MAX_RATIO = 5;
+
 export function toCardView(p: CardPainting): CardView {
   const hash = p.derivedHash;
   const iw = p.imgWidth ?? null;
+
+  /*
+   * height / width.
+   *
+   * The PROCESSED IMAGE wins: the mosaic reserves a tile from this ratio while
+   * the image inside is laid out from the same number, so if the two ever
+   * disagree the tiles collide. Canvas centimetres are only a fallback for rows
+   * whose image has not been processed yet, and 1:1 the last resort.
+   */
+  const raw =
+    p.imgWidth && p.imgHeight
+      ? p.imgHeight / p.imgWidth
+      : p.widthCm && p.heightCm
+        ? p.heightCm / p.widthCm
+        : 1;
+  const ratio = Number.isFinite(raw) ? Math.min(MAX_RATIO, Math.max(MIN_RATIO, raw)) : 1;
 
   return {
     publicId: p.publicId,
@@ -40,21 +65,13 @@ export function toCardView(p: CardPainting): CardView {
     fallback: hash ? fallbackUrl(hash) : null,
     placeholder: thumbhashDataUrl(p.thumbhash),
     width: iw,
-    height: p.imgHeight ?? null,
     /*
-     * height / width.
-     *
-     * The PROCESSED IMAGE wins: the mosaic sizes a tile from this ratio while
-     * the image itself is laid out from its own pixel dimensions, so if the two
-     * disagree the row heights go ragged. Canvas centimetres are only a
-     * fallback for rows whose image has not been processed yet, and 1:1 the
-     * last resort.
+     * Derived from `ratio`, not copied from the row. BlurImage sizes its box
+     * from height/width when both are present, so this is what keeps the image
+     * box and the tile the mosaic reserved for it in exact agreement. For any
+     * sane row it is the stored height unchanged.
      */
-    ratio:
-      p.imgWidth && p.imgHeight
-        ? p.imgHeight / p.imgWidth
-        : p.widthCm && p.heightCm
-          ? p.heightCm / p.widthCm
-          : 1,
+    height: iw ? Math.round(iw * ratio) : (p.imgHeight ?? null),
+    ratio,
   };
 }

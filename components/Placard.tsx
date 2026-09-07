@@ -4,7 +4,17 @@ import s from "./gallery.module.css";
 /**
  * The wall label — PLAN.md §2's signature element.
  *
- * Source order stays logical (`1998 · שמן על בד`); under dir="rtl" bidi renders
+ * Three variants:
+ *   static — over the foot of the painting, always visible. Touch screens.
+ *   hover  — the same position, revealed on hover. Mouse only.
+ *   plain  — a paper label beside the work on the painting page.
+ *
+ * A tile renders both `static` and `hover` and lets the media queries pick;
+ * which one applies depends on the pointer, which is not knowable on the
+ * server. `hover` is marked aria-hidden so the pair never reads twice — the
+ * link is already labelled by the image alt text.
+ *
+ * Source order stays logical (`1998 · שמן על בד`); under dir="rtl" bidi puts
  * the year at the inline-start edge, which is what a Hebrew placard wants.
  */
 export function Placard({
@@ -29,6 +39,7 @@ export function Placard({
 
   const cls = [
     s.placard,
+    variant === "plain" ? s.placardPlain : s.placardOver,
     variant === "static" ? s.placardStatic : "",
     variant === "hover" ? s.placardHover : "",
   ]
