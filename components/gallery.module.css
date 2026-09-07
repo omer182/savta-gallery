@@ -207,14 +207,14 @@
 .grid {
   --cols: 2;
   /*
-   * Gutter as a fraction of one column. 0.06 is about 10px on a phone and
-   * 17px at full desktop width — enough air that each painting reads as its
-   * own object rather than one strip of a bigger picture.
+   * Gutter as a fraction of one column. 0.12 is about 20px on a phone and
+   * 34px at full desktop width — the paintings hang with real wall between
+   * them rather than crowding one another.
    *
    * KEEP IN SYNC with GUTTER_ROWS in Mosaic.tsx. One row is 1% of a column,
-   * so this fraction times 100 is that row count: 0.06 -> 6.
+   * so this fraction times 100 is that row count: 0.12 -> 12.
    */
-  --gut-f: 0.06;
+  --gut-f: 0.12;
   --col: calc(100cqw / (var(--cols) + (var(--cols) - 1) * var(--gut-f)));
 
   display: grid;
@@ -240,11 +240,11 @@
 /*
  * --span is written by the server: the ratio rows plus the gutter rows, added
  * there rather than here because `span calc(…)` is not dependable across
- * browsers, while substituting a plain integer always is. The 106 fallback is
+ * browsers, while substituting a plain integer always is. The 112 fallback is
  * a square plus a gutter, for a row that somehow arrives with no dimensions.
  */
 .card {
-  grid-row-end: span var(--span, 106);
+  grid-row-end: span var(--span, 112);
   /* Not stretch: the box should be exactly the height of the painting, so
      the reserved gutter rows stay genuinely empty. */
   align-self: start;
@@ -261,6 +261,34 @@
     transform: none;
   }
 }
+/*
+ * Reveal on scroll.
+ *
+ * Driven by the scroll position rather than by a timer: each painting fades and
+ * lifts as it comes up into the scroller, instead of every card in the archive
+ * animating once at load and being long finished by the time it is reached.
+ *
+ * Deliberately CSS and not an IntersectionObserver. An observer means parking
+ * the cards at opacity 0 and trusting a script to turn them back on — the exact
+ * shape of the bug that once left this gallery blank. Here the animation is
+ * simply absent where it is unsupported and the base rule above still runs, so
+ * a painting can never end up invisible.
+ *
+ * `view()` measures against the nearest scrollport, which is .shellScroll — the
+ * only thing that scrolls on the page. Cards already on screen at load sit past
+ * the end of the range and so are painted fully visible straight away.
+ */
+@supports (animation-timeline: view()) {
+  .card {
+    animation-name: rise;
+    animation-timeline: view();
+    animation-range: entry 0% entry 55%;
+    /* The load stagger belongs to the timed version; on a scroll timeline each
+       card is already staggered by where it sits. */
+    animation-delay: 0s;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .card {
     animation: none;

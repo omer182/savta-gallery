@@ -29,13 +29,13 @@ export function Mosaic({ children }: { children: ReactNode }) {
  * The vertical gutter, in grid rows.
  *
  * One row is 1% of a column width, so this is the row form of --gut-f in
- * gallery.module.css — KEEP THE TWO IN SYNC (0.06 there, 6 here).
+ * gallery.module.css — KEEP THE TWO IN SYNC (0.12 there, 12 here).
  *
  * It is reserved inside each span instead of being a row-gap: with a real
  * row-gap an N-row span would also pick up N-1 gaps, and a tile height would
  * stop being a clean multiple of the row unit.
  */
-const GUTTER_ROWS = 6;
+const GUTTER_ROWS = 12;
 
 /**
  * One tile.
