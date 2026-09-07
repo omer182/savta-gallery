@@ -5,35 +5,39 @@ import s from "./gallery.module.css";
 import { Placard } from "./Placard";
 
 /**
- * One painting in the mosaic. Purely presentational — it takes a precomputed
- * CardView so it can also render on the client (search results) without
- * dragging sharp or Buffer along.
+ * One painting in the mosaic, laid out as the mock's <figure>: the matted
+ * frame, then a quiet caption beneath it.
  *
- * It is a real <a>, not a click-handled <figure>: keyboard reachable,
- * cmd-clickable, crawlable, with a visible focus ring (PLAN.md §2).
+ * The caption carries the title and year and is always on screen. The full
+ * placard - title, year, medium - lies over the foot of the painting and waits
+ * to be asked for: hover on a mouse, the first tap on a phone.
  *
- * The image is the whole tile. Both placards lie over its foot rather than
- * sitting below it — see the placard notes in gallery.module.css. Which of the
- * two applies depends on whether the device has a hover, which only the client
- * knows, so both are rendered and the media queries choose.
+ * Purely presentational, taking a precomputed CardView so it can also render
+ * on the client (search results) without dragging sharp or Buffer along.
  */
 export function PaintingCard({ p, priority = false }: { p: CardView; priority?: boolean }) {
   return (
-    <CardLink className={s.cardInner} href={p.href}>
-      <BlurImage
-        alt={p.title}
-        avif={p.avif}
-        webp={p.webp}
-        fallback={p.fallback}
-        placeholder={p.placeholder}
-        width={p.width}
-        height={p.height}
-        ratio={p.ratio}
-        sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-        priority={priority}
-      />
-      <Placard title={p.title} year={p.year} medium={p.medium} variant="tap" />
-      <Placard title={p.title} year={p.year} medium={p.medium} variant="hover" />
-    </CardLink>
+    <>
+      <CardLink className={s.frame} href={p.href}>
+        <BlurImage
+          alt={p.title}
+          avif={p.avif}
+          webp={p.webp}
+          fallback={p.fallback}
+          placeholder={p.placeholder}
+          width={p.width}
+          height={p.height}
+          ratio={p.ratio}
+          sizes="(min-width: 760px) 33vw, 50vw"
+          priority={priority}
+        />
+        <Placard title={p.title} year={p.year} medium={p.medium} variant="tap" />
+        <Placard title={p.title} year={p.year} medium={p.medium} variant="hover" />
+      </CardLink>
+      <figcaption className={s.cap} dir="auto">
+        <span className={s.capTitle}>{p.title}</span>
+        {p.year ? `, ${p.year}` : ""}
+      </figcaption>
+    </>
   );
 }
