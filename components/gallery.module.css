@@ -297,32 +297,34 @@
 
 /*
  * The whole tile is one <a> — keyboard reachable, cmd-clickable, crawlable,
- * with a visible focus ring (§2). No white mat and no drop shadow: in a
- * mosaic the paintings butt up against one another, and the frames in the
- * photographs are the only frames there are.
+ * with a visible focus ring (§2).
+ *
+ * The mat: white board, soft drop shadow, the painting inset inside it, and a
+ * lift on hover. This is the treatment from the original mock, and it is what
+ * makes the wall read as framed work rather than as photographs butted up
+ * against each other.
+ *
+ * The padding is a PERCENTAGE and not pixels, which matters more than it
+ * looks. Percentage padding resolves against the containing block's inline
+ * size in BOTH axes, so 3% is 3% of a column top and bottom as well as left
+ * and right — exactly 6 grid rows, since a row is 1% of a column. A pixel mat
+ * could not be converted to rows and would break the tiling. See MAT_ROWS in
+ * Mosaic.tsx.
  */
 .cardInner {
   display: block;
   position: relative;
-  overflow: hidden;
-  background: var(--line-soft);
-}
-.cardInner::after {
-  /* An inset hairline, so two pale paintings side by side still read as two.
-     Inset rather than a border, which would add to the tile height and break
-     the row arithmetic above. */
-  content: "";
-  position: absolute;
-  inset: 0;
-  box-shadow: inset 0 0 0 1px rgba(28, 26, 21, 0.07);
-  pointer-events: none;
+  background: #fff;
+  padding: 3%;
+  box-shadow: var(--sh-frame);
 }
 @media (hover: hover) and (pointer: fine) {
   .cardInner {
-    transition: filter 0.35s;
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s;
   }
   .cardInner:hover {
-    filter: brightness(1.04);
+    transform: translateY(-4px);
+    box-shadow: var(--sh-lift);
   }
 }
 
@@ -379,16 +381,16 @@
  */
 .placardOver {
   position: absolute;
-  inset-inline-start: 9px;
-  bottom: 9px;
-  max-width: calc(100% - 18px);
-  padding: 6px 9px;
+  inset-inline-start: 10px;
+  bottom: 10px;
+  max-width: calc(100% - 20px);
+  padding: 8px 11px;
   background: var(--placard);
   border: 1px solid var(--line);
   box-shadow: var(--sh-card);
 }
 .placardOver .placardTitle {
-  font-size: 13.5px;
+  font-size: 15px;
   line-height: 1.3;
   /* Two lines at most, so a long title never creeps up the painting. */
   display: -webkit-box;
@@ -402,13 +404,13 @@
 }
 @media (min-width: 640px) {
   .placardOver {
-    inset-inline-start: 11px;
-    bottom: 11px;
-    max-width: calc(100% - 22px);
-    padding: 7px 11px;
+    inset-inline-start: 14px;
+    bottom: 14px;
+    max-width: calc(100% - 28px);
+    padding: 10px 14px;
   }
   .placardOver .placardTitle {
-    font-size: 15px;
+    font-size: 17px;
   }
   .placardOver .placardMeta {
     font-size: 11.5px;

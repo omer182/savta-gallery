@@ -38,6 +38,18 @@ export function Mosaic({ children }: { children: ReactNode }) {
 const GUTTER_ROWS = 12;
 
 /**
+ * The white mat around each painting, in grid rows — top and bottom combined.
+ *
+ * .cardInner pads by 3% of a column on every side. Percentage padding resolves
+ * against the inline size in both axes, so that is 3 rows above and 3 below,
+ * and it also narrows the painting itself to (100 - MAT_ROWS)% of the column.
+ * Both effects are in the span below.
+ *
+ * KEEP IN SYNC with the `padding` on .cardInner in gallery.module.css.
+ */
+const MAT_ROWS = 6;
+
+/**
  * One tile.
  *
  * `ratio` is height / width, and it must be the SAME number the image inside
@@ -58,11 +70,16 @@ export function Tile({
 }) {
   const r = Number.isFinite(ratio) && ratio > 0 ? ratio : 1;
 
+  // The painting is only (100 - MAT_ROWS)% of the column wide once the mat has
+  // taken its share, so it is that much shorter too; then add back the mat
+  // itself and the gutter below the tile.
+  const span = Math.round((100 - MAT_ROWS) * r) + MAT_ROWS + GUTTER_ROWS;
+
   return (
     <div
       className={s.card}
       style={
-        { "--i": index % 12, "--span": Math.round(r * 100) + GUTTER_ROWS } as CSSProperties
+        { "--i": index % 12, "--span": span } as CSSProperties
       }
     >
       {children}
