@@ -301,14 +301,14 @@
 /* ======================================================================
  * Placard
  *
- * The signature element, and it has to be readable without hover because the
+ * The signature element, and it has to be reachable without hover because the
  * phone is the primary surface (§2). In a mosaic it cannot sit below the
  * painting — a two-line title would add height the row arithmetic does not
  * know about and the tiles would collide — so it lies over the foot of the
  * painting instead.
  *
- * On a mouse it stays hidden until hover, which leaves a wide gallery
- * completely clean.
+ * Hidden at rest on every device: hover reveals it on a mouse, the first tap
+ * reveals it on a phone. The wall is nothing but paint until asked.
  * ==================================================================== */
 .placard {
   text-align: start;
@@ -387,12 +387,24 @@
   }
 }
 
-/* Touch: always on. Mouse: fades in on hover. */
-.placardStatic {
+/*
+ * Touch: revealed by the first tap, and the second tap opens the painting
+ * (CardLink.tsx). A phone has no hover, so the alternative was a label sitting
+ * permanently over a corner of every painting on the wall — and the whole point
+ * of dropping the mat was to see the paint.
+ */
+.placardTap {
   pointer-events: none;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.22s, transform 0.22s;
+}
+.cardInner[data-revealed] .placardTap {
+  opacity: 1;
+  transform: none;
 }
 @media (hover: hover) and (pointer: fine) {
-  .placardStatic {
+  .placardTap {
     display: none;
   }
 }

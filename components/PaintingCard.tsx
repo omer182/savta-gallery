@@ -1,6 +1,6 @@
-import Link from "next/link";
 import type { CardView } from "@/lib/cardView";
 import { BlurImage } from "./BlurImage";
+import { CardLink } from "./CardLink";
 import s from "./gallery.module.css";
 import { Placard } from "./Placard";
 
@@ -13,11 +13,13 @@ import { Placard } from "./Placard";
  * cmd-clickable, crawlable, with a visible focus ring (PLAN.md §2).
  *
  * The image is the whole tile. Both placards lie over its foot rather than
- * sitting below it — see the placard notes in gallery.module.css.
+ * sitting below it — see the placard notes in gallery.module.css. Which of the
+ * two applies depends on whether the device has a hover, which only the client
+ * knows, so both are rendered and the media queries choose.
  */
 export function PaintingCard({ p, priority = false }: { p: CardView; priority?: boolean }) {
   return (
-    <Link className={s.cardInner} href={p.href}>
+    <CardLink className={s.cardInner} href={p.href}>
       <BlurImage
         alt={p.title}
         avif={p.avif}
@@ -30,8 +32,8 @@ export function PaintingCard({ p, priority = false }: { p: CardView; priority?: 
         sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
         priority={priority}
       />
-      <Placard title={p.title} year={p.year} medium={p.medium} variant="static" />
+      <Placard title={p.title} year={p.year} medium={p.medium} variant="tap" />
       <Placard title={p.title} year={p.year} medium={p.medium} variant="hover" />
-    </Link>
+    </CardLink>
   );
 }
