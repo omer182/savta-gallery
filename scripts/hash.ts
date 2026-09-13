@@ -33,6 +33,21 @@ async function main() {
    * the RAW value there instead.
    */
   const esc = (s: string) => s.replace(/\$/g, "\\$");
+  /*
+   * Docker Compose interpolates $NAME in the YAML it is handed, and an argon2
+   * hash is nothing but $ segments: $argon2id, $v, $m, then the salt and the
+   * digest. Unescaped, each is substituted with an empty string and a 97-char
+   * hash reaches the container as 44. $$ is the literal-dollar escape.
+   *
+   * This bit us in production. The failure is silent and looks exactly like a
+   * wrong password: a malformed hash makes verify() throw, safeVerify()
+   * swallows it, and the route answers 401.
+   */
+  const compose = (s: string) => s.split("$").join("$$");
+
+  console.log("\n# --- docker-compose / Portainer stack YAML ($$ escaped) ---");
+  console.log(`ARTIST_PASSWORD_HASH=${compose(artistHash)}`);
+  if (adminHash) console.log(`ADMIN_PASSWORD_HASH=${compose(adminHash)}`);
 
   console.log("\n# --- .env.local (dollar signs escaped, keep them) ---");
   console.log(`SESSION_SECRET=${randomBytes(32).toString("hex")}`);

@@ -64,8 +64,21 @@ services:
     restart: unless-stopped
 ```
 
-Put the three secrets in the stack's **Environment variables** panel, not in
-the YAML — raw, with no quotes and no backslashes.
+The two password hashes go **in the YAML**, with every `$` doubled to `$$`.
+
+Compose interpolates `$NAME` in the file it is handed, and an argon2 hash is
+nothing but `$` segments — `$argon2id`, `$v`, `$m`, then the salt and the digest.
+Left alone each is replaced with an empty string, and a 97-character hash
+reaches the container as 44. `$$` is Compose's literal-dollar escape.
+
+`npm run hash` prints a ready-escaped block for exactly this. `SESSION_SECRET`
+is plain hex with no `$`, so it needs no escaping either way.
+
+The failure is silent and looks like a wrong password: a malformed hash makes
+`verify()` throw, `safeVerify()` swallows it so a bad env var cannot 500 the
+route, and login answers `401 סיסמה שגויה`. **If a login mysteriously fails,
+check the length first** — in the container console,
+`echo "${#ADMIN_PASSWORD_HASH}"` must print `97`.
 
 If the package is private, add a registry credential in Portainer
 (**Registries → GitHub**) using a PAT with `read:packages`.
