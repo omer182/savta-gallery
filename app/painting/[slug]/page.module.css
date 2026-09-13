@@ -161,12 +161,17 @@
    * landscape would otherwise be trimmed top and bottom to fill a tall frame,
    * and a painting must never be shown cropped.
    */
+  /*
+   * The width goes on the FRAME, never on the image box inside it.
+   *
+   * `fit-content` on the frame plus a percentage width on the child is
+   * circular: shrink-to-fit asks the child how wide it wants to be, the child
+   * answers "100% of you", and because the real image is absolutely positioned
+   * there is no intrinsic width to fall back on - the whole thing collapses to
+   * a thumbnail. With the width here, 100% resolves against .art, which has a
+   * definite width, and the image box simply fills it.
+   */
   .heroFrame {
-    width: fit-content;
-    max-width: 100%;
-  }
-  .heroFrame > span {
-    display: block;
     width: min(100%, calc((100dvh - var(--chrome)) / var(--r, 1)));
   }
 
