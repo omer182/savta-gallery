@@ -91,8 +91,17 @@ export default async function PaintingPage({ params }: { params: Promise<{ slug:
   // One painting, one photograph (PLAN.md §5) - there is no gallery of angles
   // to page through, so the work simply fills the frame.
   const primary = imgs.find((i) => i.isPrimary) ?? imgs[0];
+  /*
+   * height / width. The PROCESSED IMAGE wins over the canvas centimetres, the
+   * same precedence the cards use - the hero is sized from this, so if the two
+   * disagree the frame would not match the painting inside it.
+   */
   const ratio =
-    painting.widthCm && painting.heightCm ? painting.heightCm / painting.widthCm : 1;
+    primary?.width && primary?.height
+      ? primary.height / primary.width
+      : painting.widthCm && painting.heightCm
+        ? painting.heightCm / painting.widthCm
+        : 1;
 
   const paragraphs = (painting.story ?? "").split(/\n{2,}/).filter((p) => p.trim());
 
@@ -128,7 +137,9 @@ export default async function PaintingPage({ params }: { params: Promise<{ slug:
 
           <div className={s.top}>
             <div className={s.art}>
-              <div className={s.heroFrame}>
+              {/* --r lets the CSS cap the hero by HEIGHT as well as width, so
+                  the whole painting fits the screen without being cropped. */}
+              <div className={s.heroFrame} style={{ "--r": ratio } as React.CSSProperties}>
                 <BlurImage
                   alt={painting.title}
                   avif={
@@ -153,37 +164,45 @@ export default async function PaintingPage({ params }: { params: Promise<{ slug:
 
             </div>
 
+            {/* Title and her telling together; the wall label beneath them. */}
             <div className={s.side}>
-              <Placard
-                title={painting.title}
-                year={painting.year}
-                medium={painting.medium}
-                widthCm={painting.widthCm}
-                heightCm={painting.heightCm}
-                variant="plain"
-                large
-              />
-              {tags.length > 0 && (
-                <div className={s.taglist}>
-                  {tags.map((t) => (
-                    <Link key={t.slug} href={`/?tag=${encodeURIComponent(t.slug)}`}>
-                      {t.name}
-                    </Link>
+              <h2 className={s.title} dir="auto">
+                {painting.title}
+              </h2>
+
+              {paragraphs.length > 0 && (
+                <div className={s.story}>
+                  {paragraphs.map((p, i) => (
+                    <p key={i} dir="auto">
+                      {p}
+                    </p>
                   ))}
                 </div>
               )}
+
+              <div className={s.meta}>
+                <Placard
+                  title={painting.title}
+                  year={painting.year}
+                  medium={painting.medium}
+                  widthCm={painting.widthCm}
+                  heightCm={painting.heightCm}
+                  variant="plain"
+                  large
+                  showTitle={false}
+                />
+                {tags.length > 0 && (
+                  <div className={s.taglist}>
+                    {tags.map((t) => (
+                      <Link key={t.slug} href={`/?tag=${encodeURIComponent(t.slug)}`}>
+                        {t.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-
-          {paragraphs.length > 0 && (
-            <div className={s.story}>
-              {paragraphs.map((p, i) => (
-                <p key={i} dir="auto">
-                  {p}
-                </p>
-              ))}
-            </div>
-          )}
 
           {isAdmin && (
             <InlineAdmin status={painting.status}>

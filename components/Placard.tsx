@@ -25,6 +25,7 @@ export function Placard({
   heightCm,
   variant = "tap",
   large = false,
+  showTitle = true,
 }: {
   title: string;
   year: number | null;
@@ -33,6 +34,8 @@ export function Placard({
   heightCm?: number | null;
   variant?: "tap" | "hover" | "plain";
   large?: boolean;
+  /** Off on the painting page, where the title is already the page heading. */
+  showTitle?: boolean;
 }) {
   const size = formatSize(widthCm ?? null, heightCm ?? null);
   const meta = [year, medium].filter(Boolean).join(" · ");
@@ -48,13 +51,15 @@ export function Placard({
 
   return (
     <div className={cls} aria-hidden={variant === "hover" ? true : undefined}>
-      <div className={s.placardTitle} style={large ? { fontSize: 24 } : undefined} dir="auto">
-        {title}
-      </div>
+      {showTitle && (
+        <div className={s.placardTitle} style={large ? { fontSize: 24 } : undefined} dir="auto">
+          {title}
+        </div>
+      )}
       {(meta || size) && (
         <div
           className={s.placardMeta}
-          style={large ? { fontSize: 13, marginTop: 7 } : undefined}
+          style={large ? { fontSize: 13, marginTop: showTitle ? 7 : 0 } : undefined}
           dir="auto"
         >
           {meta}

@@ -1,5 +1,5 @@
 .detail {
-  padding-bottom: 80px;
+  padding-bottom: 60px;
 }
 .back {
   font-size: 14px;
@@ -15,20 +15,14 @@
   gap: 26px;
   margin-top: 24px;
 }
-@media (min-width: 900px) {
-  .top {
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 46px;
-  }
-  .art {
-    flex: 1 1 auto;
-    min-width: 0;
-    max-width: 760px;
-  }
-  .side {
-    flex: 0 0 300px;
-  }
+
+.title {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(24px, 4vw, 30px);
+  line-height: 1.2;
+  margin: 0 0 18px;
+  text-wrap: balance;
 }
 
 .heroFrame {
@@ -75,13 +69,14 @@
   color: var(--ink);
 }
 
-/* The story is the point of the site: full width below the painting at a
-   ~66-character measure, not squeezed into a sidebar (PLAN.md §2). */
+/*
+ * The story is the point of the site (PLAN.md §2), so it keeps a real reading
+ * measure and the serif it is set in. On a phone it follows the painting; on a
+ * desktop it moves into the right-hand column - see the block above.
+ */
 .story {
   max-width: 620px;
-  margin: 44px auto 0;
-  border-top: 1px solid var(--line-soft);
-  padding-top: 34px;
+  margin: 26px 0 0;
 }
 .story p {
   font-family: var(--serif);
@@ -114,4 +109,92 @@
 }
 .pager a:hover {
   color: var(--ink);
+}
+
+/* ======================================================================
+ * Desktop: the whole painting on screen at once.
+ *
+ * Painting on the left, her title and telling on the right, the wall label
+ * beneath them. Nothing scrolls except a long story inside its own column.
+ *
+ * --chrome is everything the painting does NOT get: the site header and
+ * footer, the back link, the pager, and this block's own padding. Measured
+ * against the real layout rather than guessed, and kept in one place so it
+ * can be retuned without hunting through rules.
+ * ==================================================================== */
+@media (min-width: 900px) {
+  .detail {
+    --chrome: 300px;
+    padding-bottom: 26px;
+  }
+
+  /*
+   * row-reverse, not row. Under dir="rtl" a plain row runs right to left and
+   * would put the painting - the first child - on the RIGHT. Reversing lays
+   * the children left to right, so the painting takes the left side while the
+   * text keeps reading from its own right edge.
+   */
+  .top {
+    flex-direction: row-reverse;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 46px;
+    margin-top: 20px;
+  }
+
+  .art {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+  }
+
+  /*
+   * Capped by height as well as width.
+   *
+   * The frame is only as wide as the painting needs, and that width is
+   * whichever is smaller: the column, or the width at which the painting is
+   * exactly as tall as the space left over. --r is height/width, written by
+   * the server, so dividing the height budget by it gives that second width.
+   *
+   * Sizing the BOX rather than letting object-fit crop is the point: a wide
+   * landscape would otherwise be trimmed top and bottom to fill a tall frame,
+   * and a painting must never be shown cropped.
+   */
+  .heroFrame {
+    width: fit-content;
+    max-width: 100%;
+  }
+  .heroFrame > span {
+    display: block;
+    width: min(100%, calc((100dvh - var(--chrome)) / var(--r, 1)));
+  }
+
+  .side {
+    flex: 0 1 400px;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100dvh - var(--chrome));
+  }
+  /* A long telling scrolls in its own column so the painting stays put. */
+  .story {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    margin: 0;
+    border-top: 0;
+    padding-top: 0;
+  }
+  .meta {
+    flex: 0 0 auto;
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .taglist {
+    margin-top: 16px;
+  }
+  .pager {
+    margin-top: 26px;
+  }
 }
