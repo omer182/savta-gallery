@@ -1,6 +1,7 @@
 import { createReadStream } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { Readable } from "node:stream";
 import type { NextRequest } from "next/server";
 import { getSession } from "@/lib/auth";
 import { IMAGES_DIR } from "@/lib/paths";
@@ -21,10 +22,7 @@ const TYPES: Record<string, string> = {
   ".png": "image/png",
 };
 
-export async function GET(
-  _req: NextRequest,
-  ctx: { params: Promise<{ path: string[] }> },
-) {
+export async function GET(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
   const { path: segments } = await ctx.params;
 
   // Path traversal guard: resolve, then require the result to stay inside
@@ -54,8 +52,24 @@ export async function GET(
     return new Response("Not found", { status: 404 });
   }
 
-  const stream = createReadStream(abs) as unknown as ReadableStream;
-  return new Response(stream, {
+  /*
+   * Readable.toWeb, not a cast.
+   *
+   * Handing a Node stream to Response() and calling it a ReadableStream is a
+   * lie the type system cannot catch. undici falls back to consuming it as an
+   * async iterable, and when the browser aborts mid-flight - which it does
+   * constantly here, lazy-loaded images being cancelled as they scroll out of
+   * view - the iterator keeps pushing into a controller that is already
+   * closed. That throws ERR_INVALID_STATE outside any request scope, so it
+   * surfaces as an uncaughtException in the server log rather than a failed
+   * response. toWeb wires cancellation through properly.
+   */
+  const file = createReadStream(abs);
+  // Belt and braces: if the client goes away, stop reading the file at once
+  // rather than filling a stream nobody is draining.
+  req.signal.addEventListener("abort", () => file.destroy(), { once: true });
+
+  return new Response(Readable.toWeb(file) as ReadableStream<Uint8Array>, {
     headers: {
       "Content-Type": type,
       "Content-Length": String(stat.size),
