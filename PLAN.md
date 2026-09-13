@@ -275,7 +275,17 @@ paintings_fts  FTS5(title, story, tags_text) — synced on write
 
 Notes:
 
-- A painting has many images; exactly one `is_primary` (grid + social image).
+- **A painting has exactly one image.** Decided after the first build: the archive
+  is one photograph per work, and a thumbnail strip on the painting page was UI for
+  a case that never occurs. The `images` table keeps `painting_id`, `is_primary` and
+  `sort_order` — schema churn buys nothing, and a second angle may matter one day —
+  but there is no way to add a second image and no UI that would show one.
+  - Enforced in `attachImages()` (`lib/mutations.ts`), not merely in the UI: only
+    the first id is taken, and attaching a new photograph **detaches** the old one.
+  - The replaced row is orphaned rather than deleted, so `sweepOrphanImages()`
+    collects it a day later and a mistaken swap stays recoverable until then.
+  - Re-cropping never adds a row — it rewrites the derivatives of the same image
+    and produces a fresh `derived_hash`.
 - **Slug = short id + Hebrew suffix**, e.g. `a7f3-הסירה-הכחולה`. The id (4–6 base36 chars,
   generated once at insert) is the identity; the suffix is derived from the title and is
   cosmetic. **Routing resolves on the id prefix alone** — so renaming a painting changes

@@ -1,19 +1,23 @@
 /**
- * Demo paintings, for looking at the gallery.
+ * Demo paintings, so the gallery has a real wall to look at before the
+ * digitization sessions (PLAN.md §11) produce anything.
  *
- * The real archive is ~500 works of every proportion (PLAN.md §11), and a
- * mosaic only shows its character at that kind of volume and variety — six
- * near-square placeholders tell you nothing about how the wall reads. This
- * fabricates enough paintings, in enough shapes, to judge it.
+ * Twenty works across five subjects and five media, with sizes and dates that
+ * hang together. The proportions are the point: they run from a 150cm panorama
+ * to an upright twice as tall as it is wide, which is the spread a mosaic needs
+ * before it reads as a mosaic rather than a grid with uneven bottoms.
  *
- * The images are generated, not photographs: warm abstract washes built as SVG
- * and rendered through the same pipeline as a real upload, so what lands in the
- * DB (derived hash, thumbhash, intrinsic size) is genuinely what the gallery
- * will get on the day.
+ * The images are generated, not photographed: warm abstract washes built as SVG
+ * and pushed through the same pipeline as a real upload, so the derived hash,
+ * thumbhash and intrinsic size in the database are genuinely what the gallery
+ * will be working with on the day.
  *
- *   npm run db:seed-demo                 add the demo paintings
- *   npm run db:seed-demo -- --count 120  as many as you like, for paging
+ *   npm run db:seed-demo                 the twenty demo paintings
+ *   npm run db:seed-demo -- --count 120  more, by repeating the catalogue
  *   npm run db:seed-demo -- --clear      remove them again
+ *
+ * In the container, where there is no tsx:
+ *   node dist/scripts/seed-demo.mjs [--count N | --clear]
  *
  * Every row is tagged provenanceNote = "demo-seed", which is how --clear finds
  * them, so real paintings entered by hand are never touched.
@@ -47,44 +51,162 @@ type Demo = {
   title: string;
   year: number;
   medium: string;
+  /** Real canvas width; the height follows from the ratio. */
+  widthCm: number;
+  /** height / width. */
   ratio: number;
   kind: Kind;
   tags: string[];
   story: string;
 };
 
+/**
+ * Five tags and five media, and no more. A tag strip is only useful while it
+ * can be read at a glance - twenty tags for twenty paintings is a list, not a
+ * filter. These five are the subjects she actually returns to.
+ */
+const TAGS = {
+  landscape: "נוף",
+  portrait: "דיוקן",
+  still: "טבע דומם",
+  sea: "ים",
+  abstract: "מופשט",
+} as const;
+
 const MEDIA = {
   oilCanvas: "שמן על בד",
   oilBoard: "שמן על לוח",
   water: "אקוורל",
   pastel: "פסטל על נייר",
+  gouache: "גואש על נייר",
 } as const;
 
+/**
+ * Ratio is height / width, and the spread is the whole point: a 2.2:1 panorama
+ * and a 1:2.15 upright in the same wall are what make a mosaic look like a
+ * mosaic instead of a grid with uneven bottoms.
+ */
 const DEMO: Demo[] = [
-  { title: "בקעה בשעת בין ערביים", year: 1976, medium: MEDIA.oilCanvas, ratio: 0.42, kind: "landscape", tags: ["נוף", "שמן", "שנות ה־70"], story: "הפס הארוך הזה נצבע על בד שנתפר משתי יריעות, כי שום מסגרת מוכנה לא הייתה רחבה מספיק." },
-  { title: "רכס, בוקר מוקדם", year: 1981, medium: MEDIA.oilCanvas, ratio: 0.55, kind: "landscape", tags: ["נוף", "שמן", "שנות ה־80"], story: "ציירתי מהחלון של חדר האורחים, לפני שכולם התעוררו." },
-  { title: "שדות בדרך לצפון", year: 1994, medium: MEDIA.oilCanvas, ratio: 0.62, kind: "landscape", tags: ["נוף", "שמן", "שנות ה־90"], story: "עצרנו בצד הדרך ואני ציירתי מהמושב הקדמי. הרוח הזיזה לי את הנייר כל הזמן." },
-  { title: "מפרץ אחרי הגשם", year: 2001, medium: MEDIA.oilCanvas, ratio: 0.68, kind: "landscape", tags: ["ים", "שמן", "שנות ה־2000"], story: "האור אחרי גשם הוא האור הכי קשה לצייר. ניסיתי שבע פעמים." },
-  { title: "גגות של שכונה ישנה", year: 1988, medium: MEDIA.oilBoard, ratio: 0.72, kind: "landscape", tags: ["עיר", "שמן", "שנות ה־80"], story: "הבית באמצע כבר לא קיים. טוב שציירתי אותו." },
-  { title: "לימונים על מפה כחולה", year: 2006, medium: MEDIA.oilCanvas, ratio: 0.78, kind: "still", tags: ["טבע דומם", "שמן", "שנות ה־2000"], story: "המפה הזאת עברה אליי מאמא שלי. הלימונים היו מהעץ של השכן." },
-  { title: "כדים על אדן חלון", year: 1999, medium: MEDIA.oilBoard, ratio: 0.84, kind: "still", tags: ["טבע דומם", "שמן", "שנות ה־90"], story: "שלושה כדים שקניתי בשוק בעכו בשנות השישים, וציירתי אותם עשרים פעם." },
-  { title: "חצר בצהריים", year: 2010, medium: MEDIA.water, ratio: 0.9, kind: "landscape", tags: ["נוף", "אקוורל", "שנות ה־2010"], story: "אקוורל בחוץ, בחום. הצבע התייבש לי על המכחול." },
-  { title: "אנמונים", year: 2016, medium: MEDIA.oilCanvas, ratio: 1, kind: "still", tags: ["טבע דומם", "שמן", "שנות ה־2010"], story: "הבן שלי הביא אותם בשבת. עד יום שלישי הם כבר נבלו, אז ציירתי מהר." },
-  { title: "ריבוע של אור", year: 2018, medium: MEDIA.oilBoard, ratio: 1, kind: "abstract", tags: ["מופשט", "שמן", "שנות ה־2010"], story: "בלי נושא. רק ניסיתי לתפוס איך האור נופל על הרצפה בסטודיו בארבע אחר הצהריים." },
-  { title: "תאנים ולחם", year: 2003, medium: MEDIA.oilCanvas, ratio: 1.05, kind: "still", tags: ["טבע דומם", "שמן", "שנות ה־2000"], story: "ארוחת בוקר שלא הספקתי לאכול, כי התחלתי לצייר אותה." },
-  { title: "דיוקן של שכנה", year: 1985, medium: MEDIA.oilBoard, ratio: 1.15, kind: "portrait", tags: ["דיוקן", "שמן", "שנות ה־80"], story: "היא ישבה לי שלושה ימי שישי ברצף ולא הפסיקה לדבר. הפה יצא מצוין." },
-  { title: "ילדה עם צמה", year: 1979, medium: MEDIA.pastel, ratio: 1.22, kind: "portrait", tags: ["דיוקן", "פסטל", "שנות ה־70"], story: "הנכדה הגדולה, כשהיתה בת שש. היום יש לה ילדים משלה." },
-  { title: "חלון בחורף", year: 2012, medium: MEDIA.water, ratio: 1.3, kind: "still", tags: ["טבע דומם", "אקוורל", "שנות ה־2010"], story: "גשם על חלון הסטודיו וגרניום על האדן. אחד האקוורלים הבודדים שלא זרקתי." },
-  { title: "עץ זית זקן", year: 1997, medium: MEDIA.oilCanvas, ratio: 1.35, kind: "landscape", tags: ["נוף", "שמן", "שנות ה־90"], story: "העץ הזה עמד שם לפני כולנו ויעמוד שם אחרינו." },
-  { title: "דיוקן עצמי עם מטפחת", year: 2021, medium: MEDIA.oilBoard, ratio: 1.4, kind: "portrait", tags: ["דיוקן", "שמן", "שנות ה־2020"], story: "מול המראה הגדולה מהמסדרון. את הידיים ציירתי קודם — את הפנים כבר הכרתי." },
-  { title: "סולם אל הגג", year: 1992, medium: MEDIA.oilCanvas, ratio: 1.5, kind: "abstract", tags: ["מופשט", "שמן", "שנות ה־90"], story: "התחיל כציור של סולם והפך למשהו אחר לגמרי." },
-  { title: "אישה קוראת", year: 1983, medium: MEDIA.oilCanvas, ratio: 1.55, kind: "portrait", tags: ["דיוקן", "שמן", "שנות ה־80"], story: "אחותי, עם ספר, ליד המנורה הצהובה שהיתה לנו בסלון." },
-  { title: "ברושים", year: 2008, medium: MEDIA.oilCanvas, ratio: 1.65, kind: "landscape", tags: ["נוף", "שמן", "שנות ה־2000"], story: "שני ברושים בכניסה לקיבוץ. ציירתי אותם גבוהים יותר משהם באמת." },
-  { title: "מדרגות בעיר העתיקה", year: 2000, medium: MEDIA.water, ratio: 1.72, kind: "landscape", tags: ["עיר", "אקוורל", "שנות ה־2000"], story: "ישבתי על מדרגה וציירתי את המדרגות שמעליי. אנשים עברו לי בתוך הציור." },
-  { title: "דקל צעיר", year: 2014, medium: MEDIA.oilBoard, ratio: 1.85, kind: "landscape", tags: ["נוף", "שמן", "שנות ה־2010"], story: "שתלנו אותו כשנכנסנו לבית. עכשיו הוא גבוה מהגג." },
-  { title: "עמוד של תפילה", year: 2019, medium: MEDIA.oilCanvas, ratio: 2.05, kind: "abstract", tags: ["מופשט", "שמן", "שנות ה־2010"], story: "ציור צר וגבוה, כמו דף. לא ידעתי איפה לתלות אותו ובסוף הוא נשאר במסדרון." },
-  { title: "רצועת ים", year: 2022, medium: MEDIA.oilCanvas, ratio: 0.38, kind: "landscape", tags: ["ים", "שמן", "שנות ה־2020"], story: "הכי רחב שציירתי אי פעם. לקח שלושה חודשים ורוב הזמן רק הסתכלתי עליו." },
-  { title: "אור מבעד לתריס", year: 2017, medium: MEDIA.oilBoard, ratio: 2.35, kind: "abstract", tags: ["מופשט", "שמן", "שנות ה־2010"], story: "פסים של אור על הקיר. זה כל הציור." },
+  {
+    title: "בקעה בשעת בין ערביים",
+    year: 1976, medium: MEDIA.oilCanvas, widthCm: 150, ratio: 0.45,
+    kind: "landscape", tags: [TAGS.landscape],
+    story: "הפס הארוך הזה נצבע על בד שנתפר משתי יריעות, כי שום מסגרת מוכנה לא הייתה רחבה מספיק. עבדתי עליו רק בשעה שלפני החשכה, ולכן הוא לקח קיץ שלם.",
+  },
+  {
+    title: "רצועת ים",
+    year: 2022, medium: MEDIA.oilCanvas, widthCm: 140, ratio: 0.52,
+    kind: "landscape", tags: [TAGS.sea],
+    story: "הציור הרחב ביותר שציירתי אי פעם. הוא לקח שלושה חודשים, ורוב הזמן הזה רק הסתכלתי עליו בלי לגעת.",
+  },
+  {
+    title: "רכס, בוקר מוקדם",
+    year: 1981, medium: MEDIA.oilCanvas, widthCm: 100, ratio: 0.6,
+    kind: "landscape", tags: [TAGS.landscape],
+    story: "ציירתי מהחלון של חדר האורחים, לפני שכולם התעוררו. ההר משנה צבע שלוש פעמים בין חמש לשבע.",
+  },
+  {
+    title: "מפרץ אחרי הגשם",
+    year: 2001, medium: MEDIA.oilCanvas, widthCm: 95, ratio: 0.68,
+    kind: "landscape", tags: [TAGS.sea],
+    story: "האור שאחרי הגשם הוא האור הקשה ביותר לצייר, כי הוא לא נשאר. ניסיתי שבע פעמים עד שהפסקתי לנסות.",
+  },
+  {
+    title: "שדות בדרך לצפון",
+    year: 1994, medium: MEDIA.oilCanvas, widthCm: 110, ratio: 0.74,
+    kind: "landscape", tags: [TAGS.landscape],
+    story: "עצרנו בצד הדרך ואני ציירתי מהמושב הקדמי. הרוח הזיזה לי את הנייר כל הזמן, ובסוף השארתי את הקיפול בפנים.",
+  },
+  {
+    title: "לימונים על מפה כחולה",
+    year: 2006, medium: MEDIA.oilCanvas, widthCm: 60, ratio: 0.8,
+    kind: "still", tags: [TAGS.still],
+    story: "המפה הזאת עברה אליי מאמא שלי והיא ישנה משנינו. הלימונים היו מהעץ של השכן, שלא ידע שאני לוקחת.",
+  },
+  {
+    title: "כדים על אדן חלון",
+    year: 1999, medium: MEDIA.oilBoard, widthCm: 50, ratio: 0.88,
+    kind: "still", tags: [TAGS.still],
+    story: "שלושה כדים שקניתי בשוק בעכו בשנות השישים. ציירתי אותם עשרים פעם ובכל פעם הם יצאו אחרת.",
+  },
+  {
+    title: "חצר בצהריים",
+    year: 2010, medium: MEDIA.water, widthCm: 45, ratio: 0.95,
+    kind: "landscape", tags: [TAGS.landscape],
+    story: "אקוורל בחוץ, בחום של אוגוסט. הצבע התייבש לי על המכחול לפני שהספקתי להגיע לנייר.",
+  },
+  {
+    title: "אנמונים",
+    year: 2016, medium: MEDIA.oilCanvas, widthCm: 40, ratio: 1,
+    kind: "still", tags: [TAGS.still],
+    story: "הבן שלי הביא אותם בשבת. עד יום שלישי הם כבר נבלו, אז ציירתי מהר, ורואים את זה.",
+  },
+  {
+    title: "ריבוע של אור",
+    year: 2018, medium: MEDIA.oilBoard, widthCm: 50, ratio: 1,
+    kind: "abstract", tags: [TAGS.abstract],
+    story: "בלי נושא. רק ניסיתי לתפוס איך האור נופל על רצפת הסטודיו בארבע אחר הצהריים, לפני שהוא זז.",
+  },
+  {
+    title: "תאנים ולחם",
+    year: 2003, medium: MEDIA.oilCanvas, widthCm: 58, ratio: 1.08,
+    kind: "still", tags: [TAGS.still],
+    story: "ארוחת בוקר שלא הספקתי לאכול, כי התחלתי לצייר אותה. אכלתי את התאנים אחר כך, כבר מהציור.",
+  },
+  {
+    title: "דיוקן של שכנה",
+    year: 1985, medium: MEDIA.oilBoard, widthCm: 45, ratio: 1.16,
+    kind: "portrait", tags: [TAGS.portrait],
+    story: "היא ישבה לי שלושה ימי שישי ברצף ולא הפסיקה לדבר אפילו לרגע. התלונות נראות בפה, אני מבטיחה.",
+  },
+  {
+    title: "ילדה עם צמה",
+    year: 1979, medium: MEDIA.pastel, widthCm: 40, ratio: 1.25,
+    kind: "portrait", tags: [TAGS.portrait],
+    story: "הנכדה הגדולה, כשהייתה בת שש. היום יש לה ילדים משלה, ואחד מהם יושב בדיוק באותה צורה.",
+  },
+  {
+    title: "חלון בחורף",
+    year: 2012, medium: MEDIA.water, widthCm: 35, ratio: 1.34,
+    kind: "still", tags: [TAGS.still],
+    story: "גשם על חלון הסטודיו וגרניום על האדן. זה אחד האקוורלים הבודדים שלא זרקתי לפח באותו חורף.",
+  },
+  {
+    title: "עץ זית זקן",
+    year: 1997, medium: MEDIA.oilCanvas, widthCm: 65, ratio: 1.4,
+    kind: "landscape", tags: [TAGS.landscape],
+    story: "העץ הזה עמד שם לפני כולנו ויעמוד שם אחרינו. ציירתי אותו בשנה שבה עברנו לבית ממול.",
+  },
+  {
+    title: "דיוקן עצמי עם מטפחת",
+    year: 2021, medium: MEDIA.oilBoard, widthCm: 50, ratio: 1.48,
+    kind: "portrait", tags: [TAGS.portrait],
+    story: "עשיתי אותו מול המראה הגדולה מהמסדרון. את הידיים ציירתי קודם — את הפנים כבר הכרתי.",
+  },
+  {
+    title: "אישה קוראת",
+    year: 1983, medium: MEDIA.oilCanvas, widthCm: 55, ratio: 1.6,
+    kind: "portrait", tags: [TAGS.portrait],
+    story: "אחותי, עם ספר, ליד המנורה הצהובה שהייתה לנו בסלון. היא לא ידעה שאני מציירת אותה.",
+  },
+  {
+    title: "סולם אל הגג",
+    year: 1992, medium: MEDIA.gouache, widthCm: 48, ratio: 1.75,
+    kind: "abstract", tags: [TAGS.abstract],
+    story: "התחיל כציור של סולם והפך למשהו אחר לגמרי. השארתי לו את השם הראשון כי הוא עוד מגיע לאנשהו.",
+  },
+  {
+    title: "ברושים",
+    year: 2008, medium: MEDIA.oilCanvas, widthCm: 55, ratio: 1.95,
+    kind: "landscape", tags: [TAGS.landscape],
+    story: "שני ברושים בכניסה לקיבוץ. ציירתי אותם גבוהים יותר משהם באמת, וזה לא היה בטעות.",
+  },
+  {
+    title: "אור מבעד לתריס",
+    year: 2017, medium: MEDIA.gouache, widthCm: 38, ratio: 2.15,
+    kind: "abstract", tags: [TAGS.abstract],
+    story: "פסים של אור על הקיר בשעת אחר הצהריים. זה כל הציור, ולא היה צריך יותר מזה.",
+  },
 ];
 
 /* ------------------------------------------------------------------ *
@@ -262,9 +384,9 @@ async function seed() {
         title,
         year,
         medium: d.medium,
-        // Plausible physical sizes that agree with the image proportions.
-        widthCm: 90,
-        heightCm: Math.round(90 * ratio),
+        // Her real canvas sizes, and they agree with the image proportions.
+        widthCm: d.widthCm,
+        heightCm: Math.round(d.widthCm * ratio),
         story: d.story,
         status: "published",
         provenance: "artist",

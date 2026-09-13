@@ -37,8 +37,9 @@ export default async function EditPainting({ params }: { params: Promise<{ id: s
     ]),
   );
 
+  // One painting, one photograph (PLAN.md §5). getImages sorts the primary
+  // first, so this is the painting's image, full stop.
   const primary = imgs.find((i) => i.isPrimary) ?? imgs[0];
-  const others = imgs.filter((i) => i.id !== primary?.id);
   const failed = imgs.filter((i) => i.processingStatus === "failed");
 
   return (
@@ -74,35 +75,6 @@ export default async function EditPainting({ params }: { params: Promise<{ id: s
         />
       )}
 
-      {others.length > 0 && (
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 26 }}>
-          {others.map((im) => (
-            <div key={im.id} className={a.listThumb} style={{ width: 88, flex: "0 0 88px" }}>
-              {im.derivedHash ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={fallbackUrl(im.derivedHash)}
-                  alt=""
-                  style={{ display: "block", width: "100%" }}
-                />
-              ) : (
-                <div
-                  style={{
-                    aspectRatio: "1",
-                    background: "#efe9dc",
-                    fontSize: 10,
-                    padding: 4,
-                    color: "var(--muted)",
-                  }}
-                >
-                  {im.processingStatus === "failed" ? "שגיאה" : "מעבד…"}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
       {painting.needsCrop && (
         <div className={a.note}>
           התמונה עדיין לא נחתכה — מה שמוצג כאן הוא הצילום המקורי, כולל הקיר והפתק.{" "}
@@ -112,7 +84,7 @@ export default async function EditPainting({ params }: { params: Promise<{ id: s
 
       {failed.length > 0 && (
         <div className={`${a.note} ${a.error}`}>
-          {failed.length} תמונות נכשלו בעיבוד: {failed[0]!.processingError}
+          עיבוד התמונה נכשל: {failed[0]!.processingError}
         </div>
       )}
 

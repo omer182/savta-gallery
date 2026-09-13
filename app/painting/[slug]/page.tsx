@@ -88,8 +88,9 @@ export default async function PaintingPage({ params }: { params: Promise<{ slug:
   const tags = getTagsFor(painting.id);
   const { prev, next } = neighbours(painting.sortOrder, painting.id);
 
+  // One painting, one photograph (PLAN.md §5) - there is no gallery of angles
+  // to page through, so the work simply fills the frame.
   const primary = imgs.find((i) => i.isPrimary) ?? imgs[0];
-  const others = imgs.filter((i) => i.id !== primary?.id);
   const ratio =
     painting.widthCm && painting.heightCm ? painting.heightCm / painting.widthCm : 1;
 
@@ -150,31 +151,6 @@ export default async function PaintingPage({ params }: { params: Promise<{ slug:
                 />
               </div>
 
-              {others.length > 0 && (
-                <div className={s.thumbs}>
-                  <div className={`${s.thumb} ${s.thumbOn}`}>
-                    <BlurImage
-                      alt=""
-                      fallback={primary?.derivedHash ? fallbackUrl(primary.derivedHash) : null}
-                      placeholder={thumbhashDataUrl(primary?.thumbhash)}
-                      width={primary?.width ?? null}
-                      height={primary?.height ?? null}
-                      ratio={ratio}
-                    />
-                  </div>
-                  {others.map((im) => (
-                    <div key={im.id} className={s.thumb}>
-                      <BlurImage
-                        alt=""
-                        fallback={im.derivedHash ? fallbackUrl(im.derivedHash) : null}
-                        placeholder={thumbhashDataUrl(im.thumbhash)}
-                        width={im.width}
-                        height={im.height}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
 
             <div className={s.side}>

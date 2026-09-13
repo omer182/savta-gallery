@@ -31,6 +31,8 @@ as `admin`. Don't set them to the same string.
 | `npm run dev` / `build` / `start` | the app |
 | `npm run lint` / `typecheck` | checks |
 | `npm run db:migrate` / `db:seed` / `db:reset` / `db:studio` | database |
+| `npm run db:seed-demo` | 20 demo paintings, generated images, for looking at the gallery |
+| `npm run db:seed-demo -- --clear` | remove them again |
 | `npm run hash` | generate `SESSION_SECRET` and password hashes |
 | `npm run icons -- [image]` | PWA icons (defaults to a placeholder mark) |
 | `npm run test:session -- 5` | synthetic digitization session for testing |
@@ -84,6 +86,27 @@ disk would bypass that.
 
 Push to `main`, wait for the Action, then **Stacks → savta-gallery → Pull and
 redeploy**. Migrations run automatically on container start.
+
+### 4. Standing up a demo wall
+
+A fresh `/data` is empty, so the gallery has nothing to show. To fill it with
+twenty generated paintings — five subjects, five media, proportions from a
+150cm panorama to a tall upright — open the container console:
+
+```
+Portainer → Containers → savta-gallery → Console   (/bin/sh)
+node dist/scripts/seed-about.mjs
+node dist/scripts/seed-demo.mjs
+```
+
+Every demo row is marked `provenance_note = 'demo-seed'`, and
+`node dist/scripts/seed-demo.mjs --clear` removes exactly those and nothing
+else — real paintings entered by hand are never touched. Add `--count 120` to
+repeat the catalogue if you want to feel the paging.
+
+The images are generated, not photographs, but they go through the same
+pipeline as a real upload, so the derivatives, thumbhashes and sizes are
+genuinely what the gallery will be working with.
 
 ## Everything lives in `/data`
 

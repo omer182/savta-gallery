@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNotNull, isNull, lt, notInArray, sql } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, lt, ne, notInArray, sql } from "drizzle-orm";
 import { db, images, pages, paintings, paintingTags, tags } from "@/db";
 import { newPublicId, slugifyTitle } from "./slug";
 
@@ -92,18 +92,36 @@ function applyTags(paintingId: number, names: string[]) {
   }
 }
 
+/**
+ * Attaches THE photograph. One painting has exactly one image (PLAN.md §5).
+ *
+ * Enforced here and not merely in the UI, so nothing upstream can quietly grow
+ * a second one: only the first id is taken, and attaching a new photograph
+ * detaches whatever was there before. The old row is left orphaned rather than
+ * deleted, so sweepOrphanImages collects it on the usual schedule and a
+ * mistaken replacement is recoverable for a day.
+ *
+ * The isNull guard stays: an image already belonging to another painting can
+ * never be stolen by passing its id.
+ */
 function attachImages(paintingId: number, imageIds: number[]) {
-  if (!imageIds.length) return;
-  db.update(images)
-    .set({ paintingId })
-    .where(and(inArray(images.id, imageIds), isNull(images.paintingId)))
+  const next = imageIds[0];
+  if (next === undefined) return;
+
+  const claimed = db
+    .update(images)
+    .set({ paintingId, isPrimary: true })
+    .where(and(eq(images.id, next), isNull(images.paintingId)))
     .run();
 
-  // Exactly one primary (§5). First attached wins unless one is already set.
-  const rows = db.select().from(images).where(eq(images.paintingId, paintingId)).all();
-  if (!rows.some((r) => r.isPrimary) && rows[0]) {
-    db.update(images).set({ isPrimary: true }).where(eq(images.id, rows[0].id)).run();
-  }
+  // Nothing claimed means the id was already spoken for; leave the existing
+  // photograph alone rather than detaching it for a replacement that failed.
+  if (claimed.changes === 0) return;
+
+  db.update(images)
+    .set({ paintingId: null, isPrimary: false })
+    .where(and(eq(images.paintingId, paintingId), ne(images.id, next)))
+    .run();
 }
 
 export function setStatus(id: number, status: "draft" | "published" | "hidden") {

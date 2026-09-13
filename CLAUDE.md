@@ -47,6 +47,9 @@ Cloudflare owned by the user. All state is `/data` (db + images); off-site backu
 - The placard must be **visible without hover on touch screens**; it is the signature
   element and the phone is the primary surface.
 - Grid cards are real `<a href>` — keyboard reachable, crawlable, visible focus ring.
+- **One painting, one image.** No multi-image UI anywhere — no thumbnail strip on the
+  painting page, no second upload in the editor. Enforced in `attachImages()`: the
+  first id wins and a new photograph detaches the old one (PLAN.md §5).
 - Never modify a stored original. Strip metadata from public derivatives.
 - Content-hashed derivative URLs → `Cache-Control: immutable`. Admin + API routes uncached.
 - Respect `prefers-reduced-motion`. Responsive to 360px.
