@@ -129,7 +129,9 @@ export default async function PaintingPage({ params }: { params: Promise<{ slug:
 
   return (
     <PublicShell current="">
-      <div className={g.wrap}>
+      {/* s.fill makes the page at least as tall as the scroller, which is what
+          gives the pager a bottom edge to sit against on a short painting. */}
+      <div className={`${g.wrap} ${s.fill}`}>
         <div className={s.detail}>
           <Link className={s.back} href="/">
             → חזרה לגלריה

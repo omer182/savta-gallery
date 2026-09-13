@@ -1,5 +1,17 @@
+/*
+ * The page is at least as tall as the scroller, and lays out as a column, so
+ * the pager can be pushed to the bottom with margin-top:auto instead of
+ * landing wherever the painting happens to end.
+ */
+.fill {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
 .detail {
-  padding-bottom: 60px;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
 }
 .back {
   font-size: 14px;
@@ -90,13 +102,29 @@
   margin-bottom: 0;
 }
 
+/*
+ * Previous / next sit just above the footer and stay there, whatever the
+ * painting's proportions - a tall upright and a wide panorama must not move
+ * the controls to a different place on the screen.
+ *
+ * margin-top:auto does the work on a page that fits: the column has slack and
+ * this absorbs all of it, so the bar lands on the bottom edge rather than
+ * trailing the content. position:sticky covers the other case - on a phone the
+ * story makes the page taller than the screen, and this keeps the bar in the
+ * same place while the rest scrolls under it. The paper background is what
+ * makes that legible; it is the same colour the page is painted in.
+ */
 .pager {
+  margin: auto 0 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
   display: flex;
   justify-content: space-between;
   gap: 18px;
-  max-width: 620px;
-  margin: 46px auto 0;
-  padding-top: 22px;
+  padding: 14px 0 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  background: var(--paper);
   border-top: 1px solid var(--line-soft);
   font-size: 14px;
   color: var(--umber);
@@ -125,7 +153,6 @@
 @media (min-width: 900px) {
   .detail {
     --chrome: 300px;
-    padding-bottom: 26px;
   }
 
   /*
@@ -200,6 +227,6 @@
     margin-top: 16px;
   }
   .pager {
-    margin-top: 26px;
+    padding-top: 18px;
   }
 }
