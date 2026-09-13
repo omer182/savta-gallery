@@ -48,20 +48,6 @@
     margin-inline-start: 26px;
   }
 }
-/*
- * Stops floating well before phone width. Under RTL a left-floated picture is
- * on the far side of the text, so on a narrow screen it reads as coming AFTER
- * the paragraphs — including a phone held in landscape, which is why this
- * threshold is 820px and not 620px. Unfloated it simply leads the page.
- */
-@media (max-width: 820px) {
-  .portrait {
-    float: none;
-    width: min(300px, 78%);
-    margin-inline: 0 auto;
-    margin-block-end: 24px;
-  }
-}
 .portraitFrame {
   background: #fff;
   padding: 8px;
@@ -90,4 +76,39 @@
   font-weight: 300;
   color: var(--muted);
   text-align: start;
+}
+
+/*
+ * Phone and small tablet: the portrait stops floating and moves BELOW the text.
+ *
+ * Under RTL a left-floated picture sits on the far side of the paragraphs, so
+ * on a wide screen it already reads as accompanying them. Once it unfloats it
+ * would lead the page instead, which puts a face before the sentence that
+ * introduces her — so it is reordered to come last and centred under the text.
+ *
+ * Done with flex `order` rather than by moving the <figure> in the markup: the
+ * float above needs the figure BEFORE the paragraphs in source order, or there
+ * is no text left for it to float alongside. Source order stays correct for the
+ * desktop layout and for a screen reader, and only the visual order changes.
+ *
+ * 820px rather than 620px so a phone held in landscape gets this too.
+ */
+@media (max-width: 820px) {
+  .prose {
+    display: flex;
+    flex-direction: column;
+  }
+  /* Everything else defaults to order 0 and keeps its source order, so a
+     single rule is enough to send the portrait to the end. */
+  .portrait {
+    order: 1;
+    float: none;
+    width: min(300px, 78%);
+    align-self: center;
+    margin-inline: 0;
+    margin-block: 34px 0;
+  }
+  .portraitCaption {
+    text-align: center;
+  }
 }
