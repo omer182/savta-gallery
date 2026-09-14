@@ -1,7 +1,15 @@
 /*
- * The page is at least as tall as the scroller, and lays out as a column, so
- * the pager can be pushed to the bottom with margin-top:auto instead of
- * landing wherever the painting happens to end.
+ * One painting, lit.
+ *
+ * The work on the left, her title and telling on the right, the wall card
+ * beneath them, and the whole thing sized to the screen so nothing but a long
+ * story ever scrolls. Palette comes from .gallery-dark in globals.css.
+ */
+
+/*
+ * The page is at least as tall as the scroller and lays out as a column, so the
+ * pager can be pushed to the bottom with margin-top:auto instead of landing
+ * wherever the painting happens to end.
  */
 .fill {
   min-height: 100%;
@@ -13,107 +21,120 @@
   display: flex;
   flex-direction: column;
 }
+
 .back {
-  font-size: 14px;
-  color: var(--umber);
+  align-self: flex-start;
+  font-size: 12.5px;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  padding: 16px 0 0;
+  transition: color 0.25s;
 }
 .back:hover {
-  color: var(--ink);
+  color: var(--brass);
 }
 
 .top {
   display: flex;
   flex-direction: column;
-  gap: 26px;
-  margin-top: 24px;
+  gap: 28px;
+  margin-top: 20px;
 }
 
 .title {
   font-family: var(--serif);
-  font-weight: 600;
-  font-size: clamp(24px, 4vw, 30px);
-  line-height: 1.2;
-  margin: 0 0 18px;
+  font-weight: 500;
+  font-size: clamp(26px, 5vw, 40px);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 0 0 20px;
   text-wrap: balance;
 }
 
-.heroFrame {
-  background: #fff;
-  padding: 10px;
-  box-shadow: var(--sh-hero);
-}
-
-.thumbs {
-  display: flex;
-  gap: 9px;
-  margin-top: 14px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-.thumb {
-  width: 58px;
-  background: #fff;
-  padding: 2px;
-  border: 1px solid var(--line);
-  opacity: 0.6;
-  transition: opacity 0.2s, border-color 0.2s;
-}
-.thumb:hover,
-.thumbOn {
-  opacity: 1;
-  border-color: var(--ink);
-}
-
-.taglist {
-  display: flex;
-  gap: 13px;
-  flex-wrap: wrap;
-  margin-top: 22px;
-}
-.taglist a {
-  font-size: 13px;
-  font-weight: 300;
-  color: var(--umber);
-  border-bottom: 1px solid #d8cdb4;
-  padding-bottom: 1px;
-}
-.taglist a:hover {
-  color: var(--ink);
-}
-
 /*
- * The story is the point of the site (PLAN.md §2), so it keeps a real reading
- * measure and the serif it is set in. On a phone it follows the painting; on a
- * desktop it moves into the right-hand column - see the block above.
+ * The canvas. No mat: on a dark ground the light that separates a painting
+ * from the wall is the rim along its edge and the shadow it throws, not a
+ * white border competing with the work.
  */
+.heroFrame {
+  position: relative;
+  background: var(--ground-2);
+  box-shadow: var(--sh-art);
+}
+.heroFrame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(244, 239, 229, 0.12);
+}
+/*
+ * The receiving end of the morph is set INLINE on this element in page.tsx,
+ * not here.
+ *
+ * CSS Modules scope view-transition-name the way they scope animation names:
+ * written in this file it compiles to `page-module__hash__painting`, while
+ * globals.css and CardLink both use the bare `painting`. The two ends would
+ * never match and the morph would silently do nothing.
+ */
+
+/* ======================================================================
+ * Story and label
+ * ==================================================================== */
 .story {
-  max-width: 620px;
+  max-width: 62ch;
   margin: 26px 0 0;
 }
 .story p {
   font-family: var(--serif);
   font-weight: 400;
-  font-size: clamp(19px, 2.4vw, 21px);
-  line-height: 1.85; /* Hebrew needs more leading than Latin */
+  font-size: clamp(18px, 2.2vw, 21px);
+  line-height: 1.9; /* Hebrew needs more leading than Latin */
   color: var(--ink-soft);
-  margin: 0 0 1.05em;
+  margin: 0 0 1.1em;
 }
 .story p:last-child {
   margin-bottom: 0;
 }
 
-/*
- * Previous / next sit just above the footer and stay there, whatever the
- * painting's proportions - a tall upright and a wide panorama must not move
- * the controls to a different place on the screen.
+.meta {
+  margin-top: 26px;
+}
+
+.taglist {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+.taglist a {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--muted);
+  padding: 6px 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  transition: color 0.22s, border-color 0.22s;
+}
+.taglist a:hover {
+  color: var(--ink);
+  border-color: var(--brass-dim);
+}
+
+/* ======================================================================
+ * Previous / next
+ *
+ * Sits just above the footer and stays there, whatever the painting's
+ * proportions — a tall upright and a wide panorama must not move the controls
+ * to a different place on the screen.
  *
  * margin-top:auto does the work on a page that fits: the column has slack and
- * this absorbs all of it, so the bar lands on the bottom edge rather than
- * trailing the content. position:sticky covers the other case - on a phone the
- * story makes the page taller than the screen, and this keeps the bar in the
- * same place while the rest scrolls under it. The paper background is what
- * makes that legible; it is the same colour the page is painted in.
- */
+ * this absorbs all of it. position:sticky covers the other case — on a phone
+ * the story makes the page taller than the screen, and this keeps the bar in
+ * place while the rest scrolls under it.
+ * ==================================================================== */
 .pager {
   margin: auto 0 0;
   position: sticky;
@@ -121,43 +142,72 @@
   z-index: 2;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 18px;
-  padding: 14px 0 16px;
-  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-  background: var(--paper);
-  border-top: 1px solid var(--line-soft);
-  font-size: 14px;
-  color: var(--umber);
+  padding: 16px 0 18px;
+  padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to top, var(--ground) 72%, transparent);
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--muted);
 }
 .pager a {
-  max-width: 46%;
+  max-width: 44%;
+  transition: color 0.25s;
+}
+.pager a:hover {
+  color: var(--brass);
 }
 .pager a:last-child {
   text-align: end;
 }
-.pager a:hover {
-  color: var(--ink);
+/* The keyboard hint. Desktop only: there are no arrow keys to press on a
+   phone, and a key cap there is furniture rather than help. */
+.keys {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .keys {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 10.5px;
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    color: var(--muted-lt);
+  }
+  .keys kbd {
+    font-family: var(--sans);
+    font-size: 10.5px;
+    min-width: 19px;
+    text-align: center;
+    padding: 2px 5px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--muted);
+  }
 }
 
 /* ======================================================================
  * Desktop: the whole painting on screen at once.
  *
- * Painting on the left, her title and telling on the right, the wall label
- * beneath them. Nothing scrolls except a long story inside its own column.
- *
  * --chrome is everything the painting does NOT get: the site header and
- * footer, the back link, the pager, and this block's own padding. Measured
- * against the real layout rather than guessed, and kept in one place so it
- * can be retuned without hunting through rules.
+ * footer, the back link, the pager, and this block's own padding. Kept in one
+ * place so it can be retuned without hunting through rules.
+ *
+ * This block sits at the END of the stylesheet deliberately — the base .story,
+ * .taglist and .pager rules above would otherwise win on specificity ties and
+ * quietly undo the column.
  * ==================================================================== */
 @media (min-width: 900px) {
   .detail {
-    --chrome: 300px;
+    --chrome: 310px;
   }
 
   /*
    * row-reverse, not row. Under dir="rtl" a plain row runs right to left and
-   * would put the painting - the first child - on the RIGHT. Reversing lays
+   * would put the painting — the first child — on the RIGHT. Reversing lays
    * the children left to right, so the painting takes the left side while the
    * text keeps reading from its own right edge.
    */
@@ -165,8 +215,8 @@
     flex-direction: row-reverse;
     align-items: flex-start;
     justify-content: flex-end;
-    gap: 46px;
-    margin-top: 20px;
+    gap: 56px;
+    margin-top: 24px;
   }
 
   .art {
@@ -184,26 +234,19 @@
    * exactly as tall as the space left over. --r is height/width, written by
    * the server, so dividing the height budget by it gives that second width.
    *
-   * Sizing the BOX rather than letting object-fit crop is the point: a wide
-   * landscape would otherwise be trimmed top and bottom to fill a tall frame,
-   * and a painting must never be shown cropped.
-   */
-  /*
-   * The width goes on the FRAME, never on the image box inside it.
+   * The width goes on the FRAME, never on the image box inside it: a
+   * fit-content frame plus a percentage-width child is circular, and collapses
+   * the whole thing to a thumbnail.
    *
-   * `fit-content` on the frame plus a percentage width on the child is
-   * circular: shrink-to-fit asks the child how wide it wants to be, the child
-   * answers "100% of you", and because the real image is absolutely positioned
-   * there is no intrinsic width to fall back on - the whole thing collapses to
-   * a thumbnail. With the width here, 100% resolves against .art, which has a
-   * definite width, and the image box simply fills it.
+   * Sizing the box rather than letting object-fit crop is the point — a
+   * painting must never be shown cropped.
    */
   .heroFrame {
     width: min(100%, calc((100dvh - var(--chrome)) / var(--r, 1)));
   }
 
   .side {
-    flex: 0 1 400px;
+    flex: 0 1 420px;
     display: flex;
     flex-direction: column;
     max-height: calc(100dvh - var(--chrome));
@@ -214,17 +257,11 @@
     min-height: 0;
     overflow-y: auto;
     margin: 0;
-    border-top: 0;
-    padding-top: 0;
+    padding-inline-end: 8px;
   }
   .meta {
     flex: 0 0 auto;
-    margin-top: 20px;
-    padding-top: 18px;
-    border-top: 1px solid var(--line-soft);
-  }
-  .taglist {
-    margin-top: 16px;
+    margin-top: 24px;
   }
   .pager {
     padding-top: 18px;

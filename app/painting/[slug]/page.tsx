@@ -6,6 +6,7 @@ import { asc, isNotNull } from "drizzle-orm";
 import { PaintingEditor } from "@/app/admin/paintings/[id]/PaintingEditor";
 import { db, paintings as paintingsTable, tags as tagsTable } from "@/db";
 import { BlurImage } from "@/components/BlurImage";
+import { KeyboardNav } from "@/components/KeyboardNav";
 import { InlineAdmin } from "@/components/InlineAdmin";
 import { getSession } from "@/lib/auth";
 import g from "@/components/gallery.module.css";
@@ -141,7 +142,23 @@ export default async function PaintingPage({ params }: { params: Promise<{ slug:
             <div className={s.art}>
               {/* --r lets the CSS cap the hero by HEIGHT as well as width, so
                   the whole painting fits the screen without being cropped. */}
-              <div className={s.heroFrame} style={{ "--r": ratio } as React.CSSProperties}>
+              {/*
+                data-vt-hero is what CardLink watches for: it resolves the view
+                transition the moment this is on screen, so the morph from the
+                wall lands on a real painting rather than a frozen frame.
+              */}
+              <div
+                className={s.heroFrame}
+                data-vt-hero=""
+                style={
+                  {
+                    "--r": ratio,
+                    // Inline, so the name stays the bare `painting` that the
+                    // tile and globals.css both use. See page.module.css.
+                    viewTransitionName: "painting",
+                  } as React.CSSProperties
+                }
+              >
                 <BlurImage
                   alt={painting.title}
                   avif={
@@ -227,6 +244,11 @@ export default async function PaintingPage({ params }: { params: Promise<{ slug:
             </InlineAdmin>
           )}
 
+          <KeyboardNav
+            prev={prev ? paintingHref(prev.publicId, prev.title) : undefined}
+            next={next ? paintingHref(next.publicId, next.title) : undefined}
+          />
+
           <div className={s.pager}>
             {prev ? (
               <Link href={paintingHref(prev.publicId, prev.title)} dir="auto">
@@ -235,6 +257,12 @@ export default async function PaintingPage({ params }: { params: Promise<{ slug:
             ) : (
               <span />
             )}
+            <div className={s.keys} aria-hidden="true">
+              <kbd>←</kbd>
+              <kbd>→</kbd>
+              <span>מעבר בין ציורים</span>
+            </div>
+
             {next ? (
               <Link href={paintingHref(next.publicId, next.title)} dir="auto">
                 ← {next.title}

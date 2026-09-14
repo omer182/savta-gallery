@@ -1,42 +1,54 @@
+/*
+ * Search is its own page, not an overlay (PLAN.md §1). The field is the whole
+ * interface: oversized, on the ground, with a brass rule under it.
+ */
 .page {
-  padding-bottom: 80px;
+  padding-block: 40px 60px;
 }
 .bar {
-  padding-block: clamp(14px, 4vw, 30px) 0;
+  margin-bottom: 34px;
 }
 .bar input {
   width: 100%;
   background: transparent;
   border: 0;
-  border-bottom: 1px solid #c9bfa8;
+  border-bottom: 1px solid var(--line);
   outline: none;
-  padding: 8px 2px;
-  color: var(--ink);
-  text-align: start;
   font-family: var(--serif);
-  font-weight: 500;
-  font-size: clamp(24px, 6vw, 34px);
+  font-weight: 400;
+  font-size: clamp(26px, 5vw, 42px);
+  line-height: 1.2;
+  color: var(--ink);
+  padding: 10px 2px 16px;
+  transition: border-color 0.35s ease;
 }
 .bar input::placeholder {
-  color: #b6ac96;
+  color: var(--muted-lt);
 }
+.bar input:focus {
+  border-bottom-color: var(--brass);
+}
+/* The field already shows focus through the brass rule; a second ring on top
+   of it is noise. Keyboard users still get the rule. */
 .bar input:focus-visible {
   outline: none;
-  border-bottom-color: var(--umber);
 }
 .count {
-  margin-top: 12px;
-  font-size: 13px;
+  margin-top: 14px;
+  font-size: 12px;
   font-weight: 300;
+  letter-spacing: 0.03em;
   color: var(--muted);
-  min-height: 1.2em;
-}
-.results {
-  margin-top: clamp(24px, 4vw, 36px);
+  font-variant-numeric: tabular-nums;
+  min-height: 1em;
 }
 .hint {
   font-family: var(--serif);
   font-size: 20px;
-  color: var(--muted-lt);
-  padding: 52px 0;
+  font-weight: 400;
+  color: var(--muted);
+  padding: 40px 0 80px;
+}
+.results {
+  min-height: 40vh;
 }

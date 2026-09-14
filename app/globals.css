@@ -87,3 +87,119 @@ img {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ======================================================================
+ * GALLERY MODE — the public surface
+ *
+ * A lit room rather than a page: a warm near-black ground with the paintings
+ * as the only real colour on screen. Deliberately not #000 — pure black flattens
+ * a canvas photographed under warm light, and reads as a void rather than a
+ * wall.
+ *
+ * Scoped to the shell, NOT to :root. The admin screens are a different product
+ * with a different job — she fills in forms there, in daylight, on a phone —
+ * and they share these token names. Redefining them globally would silently
+ * repaint every admin screen dark. Everything below therefore applies only
+ * inside the public shell.
+ *
+ * The aliases at the end map the old light-surface names onto the new ones, so
+ * any rule that still reaches for --paper or --sh-frame lands somewhere
+ * coherent instead of falling back to a light value on a dark ground.
+ * ==================================================================== */
+.gallery-dark {
+  --ground: #0b0a09;
+  --ground-2: #131110;
+  --ground-3: #1c1918;
+
+  --ink: #f4efe5;
+  --ink-soft: #d9d1c3;
+  --muted: #8d8578;
+  --muted-lt: #6b6459;
+
+  /* The single accent. Brass, because it is what gallery fittings are made of,
+     and because it sits in the same warm family as the paintings. */
+  --brass: #c8a96a;
+  --brass-dim: #8f7c4e;
+
+  --line: #2a2523;
+  --line-soft: #1c1918;
+
+  /* The canvas edge: a thin warm-white rim, the one light surface on the wall. */
+  --mat: #f2eee5;
+
+  --sh-art: 0 2px 10px rgba(0, 0, 0, 0.55), 0 30px 64px rgba(0, 0, 0, 0.5);
+  --sh-art-lift: 0 6px 18px rgba(0, 0, 0, 0.6), 0 52px 104px rgba(0, 0, 0, 0.58);
+
+  --serif: var(--font-frank), David, Georgia, serif;
+  --sans: var(--font-heebo), "Helvetica Neue", Arial, sans-serif;
+
+  --pad: 20px;
+  --maxw: 1440px;
+
+  /* Scrollbars, form controls and the search field follow the room. */
+  color-scheme: dark;
+  background: var(--ground);
+  color: var(--ink);
+
+  /* --- compatibility aliases, see the note above --- */
+  --paper: var(--ground);
+  --placard: var(--ground-2);
+  --umber: var(--brass);
+  --sh-frame: var(--sh-art);
+  --sh-lift: var(--sh-art-lift);
+  --sh-card: var(--sh-art);
+  --sh-hero: var(--sh-art);
+}
+
+@media (min-width: 640px) {
+  .gallery-dark {
+    --pad: 34px;
+  }
+}
+
+/*
+ * The shell paints the room, but iOS rubber-band scrolling exposes the body
+ * behind it. :has keeps that band the same colour without needing a per-route
+ * class on <html>, which a shared root layout cannot give us.
+ */
+body:has(.gallery-dark) {
+  background: #0b0a09;
+}
+
+/*
+ * View Transitions.
+ *
+ * The morph from a tile to the full painting is the one piece of motion that
+ * carries real meaning here: it says "this is the same object, larger", which
+ * is exactly what walking up to a painting does. Everything else on the page
+ * stays still while it happens.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-group(painting) {
+    animation-duration: 520ms;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  /* The old and new images are the same picture, so cross-fading them just
+     muddies the morph. Hold both fully opaque and let the box move. */
+  ::view-transition-old(painting),
+  ::view-transition-new(painting) {
+    animation: none;
+    mix-blend-mode: normal;
+    height: 100%;
+    object-fit: cover;
+  }
+  ::view-transition-old(root) {
+    animation: vtFade 180ms ease both;
+  }
+  ::view-transition-new(root) {
+    animation: vtFade 260ms ease reverse both;
+  }
+}
+@keyframes vtFade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}

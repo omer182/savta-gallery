@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Assistant, Frank_Ruhl_Libre } from "next/font/google";
+import { Assistant, Frank_Ruhl_Libre, Heebo } from "next/font/google";
 import "./globals.css";
 
 /*
@@ -18,6 +18,23 @@ const assistant = Assistant({
   variable: "--font-assistant",
   subsets: ["hebrew", "latin"],
   weight: ["300", "400", "600"],
+  display: "swap",
+});
+
+/*
+ * The public gallery's UI face. Heebo is a Hebrew-native geometric sans - it
+ * carries the tighter, more contemporary voice the dark rooms want, where
+ * Assistant reads softer and stays on the admin screens.
+ *
+ * Both faces ship the `hebrew` subset. That is the whole constraint: the
+ * fashionable pairings for a gallery site (Archivo, Space Grotesk, Inter) have
+ * no Hebrew glyphs at all, which is why Cormorant and Karla were retired here
+ * in the first place.
+ */
+const heebo = Heebo({
+  variable: "--font-heebo",
+  subsets: ["hebrew", "latin"],
+  weight: ["200", "300", "400", "500", "700"],
   display: "swap",
 });
 
@@ -92,7 +109,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="he"
       dir="rtl"
-      className={`${frank.variable} ${assistant.variable}`}
+      className={`${frank.variable} ${assistant.variable} ${heebo.variable}`}
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>

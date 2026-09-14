@@ -1,8 +1,12 @@
 /*
- * Public gallery — PLAN.md §2.
+ * The gallery — a lit room, not a page.
  *
- * Everything here uses logical properties (inline-start/end, padding-inline)
- * so nothing is pinned to a physical side under dir="rtl".
+ * Near-black walls, paintings as the only real colour on screen, one brass
+ * accent for anything that is not a painting. Everything uses logical
+ * properties so nothing is pinned to a physical side under dir="rtl".
+ *
+ * The palette lives in globals.css under .gallery-dark and is scoped to this
+ * shell, so the admin screens keep their daylight.
  */
 
 .wrap {
@@ -12,52 +16,90 @@
 }
 
 /* ======================================================================
- * App shell — fixed chrome, scrolling art
+ * Shell — fixed chrome, only the art moves
  *
- * The artist name, the nav and the footer stay put; only the paintings move
- * underneath them.
- *
- * 100dvh, not 100vh: on iOS the dynamic viewport unit tracks Safari's
- * collapsing toolbars, where 100vh is the TALLER measurement and would push
- * the footer off screen exactly when it is meant to be visible.
+ * 100dvh, not 100vh: on iOS the dynamic unit tracks Safari's collapsing
+ * toolbars, where 100vh is the TALLER measurement and would push the footer
+ * off screen exactly when it is meant to be visible.
  * ==================================================================== */
 .shell {
+  position: relative;
   height: 100dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--sans);
 }
+
+/*
+ * The room light. A single warm pool that follows the pointer, painted behind
+ * the art rather than over it, so nothing it touches loses contrast. --mx/--my
+ * are written by Spotlight.tsx on a rAF; fixed defaults mean that if the
+ * script never runs, the wall is simply lit from the middle.
+ */
+.shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    600px circle at var(--mx, 50%) var(--my, 32%),
+    rgba(200, 169, 106, 0.08),
+    rgba(200, 169, 106, 0.03) 42%,
+    transparent 68%
+  );
+  transition: opacity 0.5s ease;
+}
+@media (hover: none), (prefers-reduced-motion: reduce) {
+  /* No pointer to follow, or motion is unwelcome: hold a still, even wash. */
+  .shell::before {
+    background: radial-gradient(
+      760px circle at 50% 24%,
+      rgba(200, 169, 106, 0.07),
+      transparent 70%
+    );
+  }
+}
+
 .shellHead {
+  position: relative;
+  z-index: 2;
   flex: 0 0 auto;
 }
-/* The one scrolling region on the page. min-height:0 is load-bearing — a flex
-   child otherwise refuses to shrink below its content and the whole shell
-   scrolls instead. */
+/* The one scrolling region. min-height:0 is load-bearing — a flex child
+   otherwise refuses to shrink below its content and the whole shell scrolls. */
 .shellScroll {
+  position: relative;
+  z-index: 1;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
 }
 
 /* ======================================================================
  * Header
  * ==================================================================== */
 .head {
-  padding-block: clamp(22px, 5vw, 38px) clamp(14px, 3vw, 22px);
+  padding-block: clamp(26px, 5vw, 44px) clamp(16px, 3vw, 26px);
 }
 .headRow {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 @media (min-width: 760px) {
   .headRow {
     flex-direction: row;
     align-items: flex-end;
     justify-content: space-between;
-    gap: 24px;
+    gap: 28px;
   }
 }
 .marque {
@@ -67,11 +109,13 @@
 .marque h1 {
   margin: 0;
   font-family: var(--serif);
-  font-weight: 600;
-  font-size: clamp(26px, 6vw, 42px);
-  line-height: 1.15;
+  font-weight: 500;
+  font-size: clamp(30px, 7vw, 56px);
+  line-height: 1.02;
+  letter-spacing: -0.015em;
+  color: var(--ink);
   text-wrap: balance;
-  max-width: 15ch;
+  max-width: 14ch;
 }
 @media (min-width: 760px) {
   .marque h1 {
@@ -81,64 +125,87 @@
 /* Hebrew has no uppercase, so the quiet-label hierarchy is built from size,
    weight and colour rather than caps. Tracking stays under .02em. */
 .sub {
-  margin-top: 8px;
+  margin-top: 12px;
   font-size: 12.5px;
   font-weight: 300;
   letter-spacing: 0.02em;
   color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 .nav {
   display: flex;
-  gap: 20px;
+  gap: 22px;
   flex-wrap: wrap;
 }
 @media (min-width: 760px) {
   .nav {
-    gap: 26px;
+    gap: 30px;
   }
 }
 .navlink {
+  position: relative;
   font-size: 14px;
-  font-weight: 400;
-  color: var(--umber);
-  padding-bottom: 3px;
-  border-bottom: 1px solid transparent;
-  transition: color 0.2s, border-color 0.2s;
+  font-weight: 300;
+  color: var(--muted);
+  padding-bottom: 5px;
+  transition: color 0.25s;
+}
+/* A brass rule that grows from the reading edge rather than a border that
+   blinks on. Under RTL that edge is the right one, hence transform-origin. */
+.navlink::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--brass);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .navlink:hover {
   color: var(--ink);
 }
+.navlink:hover::after,
+.navOn::after {
+  transform: scaleX(1);
+}
 .navOn {
   color: var(--ink);
-  border-bottom-color: var(--ink);
+  font-weight: 400;
 }
 .navAdd {
-  color: var(--ink);
-  border-bottom-color: var(--line);
+  color: var(--brass);
 }
 .rule {
   height: 1px;
-  background: var(--line);
   max-width: var(--maxw);
   margin-inline: auto;
+  background: linear-gradient(
+    to left,
+    transparent,
+    var(--line) 12%,
+    var(--line) 88%,
+    transparent
+  );
 }
 
 /* ======================================================================
  * Tag strip
  * ==================================================================== */
 .tagbar {
-  margin-block: 18px 16px;
+  margin-block: 22px 8px;
 }
 .tagscroll {
   display: flex;
-  gap: 18px;
+  gap: 10px;
   overflow-x: auto;
   scroll-snap-type: x proximity;
-  padding-bottom: 6px;
+  padding-bottom: 8px;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   /* RTL: the row runs right to left, so the fade belongs at the left edge. */
-  mask-image: linear-gradient(to left, #000 0, #000 calc(100% - 34px), transparent 100%);
+  mask-image: linear-gradient(to left, #000 0, #000 calc(100% - 40px), transparent 100%);
 }
 .tagscroll::-webkit-scrollbar {
   display: none;
@@ -147,62 +214,55 @@
   flex: 0 0 auto;
   scroll-snap-align: start;
   white-space: nowrap;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 300;
-  color: var(--muted-lt);
-  padding-bottom: 3px;
-  border-bottom: 1px solid transparent;
-  transition: color 0.2s, border-color 0.2s;
+  color: var(--muted);
+  padding: 7px 15px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  transition: color 0.22s, border-color 0.22s, background 0.22s;
 }
 .tag:hover {
-  color: var(--ink-soft);
+  color: var(--ink);
+  border-color: var(--brass-dim);
 }
 .tagOn {
-  color: var(--ink);
-  font-weight: 400;
-  border-bottom-color: var(--ink);
+  color: var(--ground);
+  background: var(--brass);
+  border-color: var(--brass);
+  font-weight: 500;
 }
 
 /* ======================================================================
- * The mosaic
+ * The wall
  *
- * Matched to the original mock (gallery-mock.jsx): a white mat on each
- * painting, a 28px gutter, the title and year always visible underneath, and
- * the full placard appearing over the painting on hover.
+ * Fixed columns with measured row spans, so DOM order stays reading order —
+ * right to left, then down. Not CSS `columns`, which fills column 1 top to
+ * bottom before starting column 2 and would scramble sort_order (§2).
  *
- * The mock used CSS `columns`, which cannot be used here — it fills column 1
- * top to bottom before starting column 2, which would scramble sort_order
- * (§2). This is grid with row spans, so DOM order stays reading order: right
- * to left, then down. Visually the two are the same thing.
- *
- * The spans are measured in Mosaic.tsx rather than derived from the aspect
- * ratio, because a tile is no longer just its painting — the caption beneath
- * it is as tall as the title needs, which nothing but the browser can know.
- *
- * The measuring is deadlock-proof by construction. Until the script adds
- * `laid`, this is an ordinary even-row grid that renders every painting at
- * full size; no card is ever parked invisible or given a span waiting to be
- * corrected. If the script never arrives, the gallery is tidy rather than
- * broken.
+ * Until Mosaic.tsx adds `laid` this is an ordinary even-row grid at full size.
+ * Nothing is parked invisible waiting on a script, and nothing carries a stale
+ * span, so a script that never arrives leaves a tidy wall rather than a ruined
+ * one.
  * ==================================================================== */
 .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 28px;
-  padding-bottom: 28px;
+  gap: 26px;
+  padding-block: 18px 40px;
 }
-/* The mock caps at three columns (`columns: 3 240px`) and never goes wider. */
 @media (min-width: 760px) {
   .grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 40px;
   }
 }
-
-/*
- * Masonry mode. row-gap drops to zero and each tile carries its own gutter
- * inside its span — with a real row-gap an N-row span also accumulates N-1
- * gaps, and the height arithmetic drifts the taller a tile gets.
- */
+@media (min-width: 1280px) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 44px;
+  }
+}
 .laid {
   grid-auto-rows: 4px;
   row-gap: 0;
@@ -210,35 +270,62 @@
 
 .card {
   margin: 0;
-  /* The box must stay exactly as tall as its content, so the gutter rows
-     reserved at the end of the span stay empty and remain measurable. */
+  /* The box stays exactly as tall as its content, so the gutter rows reserved
+     at the end of the span stay empty and remain measurable. */
   align-self: start;
 }
 .laid .card {
   grid-row-end: span var(--span, 1);
 }
 
-/* Entry, and the reveal on scroll — see the note below. */
+/*
+ * Attention. Hovering one painting dims the rest of the wall — the way
+ * stepping toward a work in a gallery pushes everything else to the edge of
+ * vision. Pointer-fine only; there is no such thing as hovering on a phone.
+ */
+@media (hover: hover) and (pointer: fine) {
+  /*
+   * Dimmed on the CHILDREN, not on .card itself.
+   *
+   * .card carries the scroll reveal, whose keyframes animate opacity and
+   * filter — and an animated value beats a plain declaration in the cascade,
+   * so dimming the figure would compile fine and then do nothing at all. The
+   * frame and the caption are not animated, so the rule lands there.
+   */
+  .grid .frame,
+  .grid .cap {
+    transition: opacity 0.45s ease, filter 0.45s ease;
+  }
+  .grid:hover .card:not(:hover) .frame,
+  .grid:hover .card:not(:hover) .cap {
+    opacity: 0.42;
+    filter: saturate(0.65);
+  }
+}
+
+/* Entry, and the reveal on scroll — see the note under @supports. */
 .card {
-  animation: rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  animation-delay: calc(var(--i, 0) * 60ms);
+  animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--i, 0) * 65ms);
 }
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(26px) scale(0.965);
+    filter: brightness(0.5);
   }
   to {
     opacity: 1;
     transform: none;
+    filter: brightness(1);
   }
 }
 
 /*
  * Reveal on scroll.
  *
- * Driven by scroll position rather than by a timer, so each painting lifts as
- * it comes up into the scroller instead of every card in the archive animating
+ * Driven by scroll position rather than by a timer, so each painting lights up
+ * as it comes into the room instead of every card in the archive animating
  * once at load and being long finished by the time it is reached.
  *
  * Deliberately CSS and not an IntersectionObserver: an observer means parking
@@ -246,15 +333,15 @@
  * the exact shape of the bug that once left this gallery blank. Where this is
  * unsupported the timed animation above simply runs instead.
  *
- * view() measures against .shellScroll, the only thing on the page that
- * scrolls. Cards already on screen at load sit past the end of the range and
- * paint fully visible straight away.
+ * view() measures against .shellScroll, the only thing that scrolls. Cards
+ * already on screen at load sit past the end of the range and paint fully
+ * visible straight away.
  */
 @supports (animation-timeline: view()) {
   .card {
     animation-name: rise;
     animation-timeline: view();
-    animation-range: entry 0% entry 55%;
+    animation-range: entry 0% entry 58%;
     animation-delay: 0s;
   }
 }
@@ -265,78 +352,104 @@
 }
 
 /*
- * The mat. White board, the painting inset by 8px, a soft drop shadow, and a
- * lift on hover — the mock's `.frame`, unchanged.
+ * The painting on the wall.
  *
- * It is also the link: one real <a> per painting, keyboard reachable,
- * cmd-clickable, crawlable, with a visible focus ring (§2).
+ * No mat and no frame: on a dark ground a white border competes with the work
+ * and reads as a sticker. What separates the canvas from the wall is a hairline
+ * of reflected light along its edge and the shadow it throws — which is what
+ * actually happens to a framed painting under a gallery spot.
+ *
+ * It is a real <a>: keyboard reachable, cmd-clickable, crawlable, with a
+ * visible focus ring (§2).
  */
 .frame {
   display: block;
   position: relative;
-  background: #fff;
-  padding: 8px;
-  box-shadow: var(--sh-frame);
+  background: var(--ground-2);
+  box-shadow: var(--sh-art);
+  transform: translateZ(0);
+}
+.frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(244, 239, 229, 0.1);
+  transition: box-shadow 0.4s ease;
 }
 @media (hover: hover) and (pointer: fine) {
   .frame {
-    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s;
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s ease,
+      filter 0.45s ease, opacity 0.45s ease;
   }
   .frame:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--sh-lift);
+    transform: translateY(-8px) scale(1.012);
+    box-shadow: var(--sh-art-lift);
+    filter: brightness(1.08);
   }
+  .frame:hover::after {
+    box-shadow: inset 0 0 0 1px rgba(200, 169, 106, 0.45);
+  }
+}
+.frame:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 6px;
 }
 
 /*
- * The caption under the frame: title and year, always visible, quiet. This is
- * what the placard on the painting is NOT — the placard is the full label and
- * waits to be asked for.
+ * The caption under the work: title and year, always legible, quiet. The full
+ * label waits to be asked for — see the placard below.
  */
 .cap {
-  margin: 8px 0 0;
+  margin: 14px 0 0;
   font-family: var(--sans);
   font-size: 12px;
-  font-weight: 300;
-  /* The mock sets .03em; Hebrew caps at .02em (§2). */
+  font-weight: 200;
   letter-spacing: 0.02em;
   color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 .capTitle {
   font-family: var(--serif);
-  font-size: 15px;
-  font-weight: 600;
-  color: #3a342b;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--ink-soft);
+  transition: color 0.3s;
+}
+.frame:hover + .cap .capTitle,
+.card:hover .capTitle {
+  color: var(--ink);
 }
 
 /* ======================================================================
- * Placard
+ * Placard — the wall label
  *
- * The mock's `.hoverLabel` — the full wall label, lying over the foot of the
- * painting, revealed on hover.
+ * Smoked glass rather than white card. On a dark wall a paper label is the
+ * brightest thing on screen and pulls the eye off the painting; a dark chip
+ * with a brass rule sits on the work without competing with it.
  *
- * A phone has no hover, so there the first tap reveals it and the second
- * opens the painting (CardLink.tsx). The title is still on screen either way,
- * in the caption beneath the frame.
+ * Hidden at rest everywhere: hover reveals it on a mouse, the first tap
+ * reveals it on a phone and the second opens the painting (CardLink.tsx). The
+ * wall is nothing but paint until asked.
  * ==================================================================== */
 .placard {
   text-align: start;
 }
-/* The painting page is not a mosaic tile — there the placard is a real wall
-   label on the paper, beside the work, with room to breathe. */
+/* The painting page is not a tile — there the label is a real wall card beside
+   the work, with room to breathe. */
 .placardPlain {
-  background: var(--placard);
+  background: var(--ground-2);
   border: 1px solid var(--line);
-  box-shadow: var(--sh-card);
-  padding: 22px 26px;
-  max-width: 340px;
+  border-inline-start: 2px solid var(--brass);
+  padding: 20px 22px;
+  max-width: 360px;
 }
 .placardTitle {
   font-family: var(--serif);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--ink);
   font-size: 24px;
-  line-height: 1.15;
+  line-height: 1.2;
   text-wrap: balance;
 }
 .placardMeta {
@@ -345,23 +458,24 @@
   font-weight: 300;
   letter-spacing: 0.02em;
   color: var(--muted);
-  margin-top: 8px;
+  margin-top: 10px;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Over the painting. Both variants share this; only visibility differs. */
 .placardOver {
   position: absolute;
-  inset-inline-start: 14px;
-  bottom: 14px;
-  max-width: calc(100% - 28px);
-  padding: 10px 14px;
-  background: var(--placard);
-  border: 1px solid var(--line);
-  box-shadow: var(--sh-card);
+  inset-inline: 12px;
+  bottom: 12px;
+  padding: 11px 14px;
+  background: rgba(11, 10, 9, 0.72);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  border: 1px solid rgba(200, 169, 106, 0.22);
 }
 .placardOver .placardTitle {
-  font-size: 17px;
-  line-height: 1.15;
+  font-size: 16px;
+  line-height: 1.25;
   /* Two lines at most, so a long title never creeps up the painting. */
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -369,38 +483,30 @@
   overflow: hidden;
 }
 .placardOver .placardMeta {
+  color: var(--brass);
   font-size: 11px;
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
-/*
- * Touch: revealed by the first tap, and the second tap opens the painting
- * (CardLink.tsx). A phone has no hover, so the alternative was a label sitting
- * permanently over a corner of every painting on the wall.
- */
-.placardTap {
+/* Touch: revealed by the first tap. Mouse: fades in on hover. */
+.placardTap,
+.placardHover {
   pointer-events: none;
   opacity: 0;
-  transform: translateY(6px);
-  transition: opacity 0.28s, transform 0.28s;
+  transform: translateY(10px);
+  transition: opacity 0.34s ease, transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .frame[data-revealed] .placardTap {
   opacity: 1;
   transform: none;
 }
+.placardHover {
+  display: none;
+}
 @media (hover: hover) and (pointer: fine) {
   .placardTap {
     display: none;
   }
-}
-.placardHover {
-  display: none;
-  pointer-events: none;
-  opacity: 0;
-  transform: translateY(6px);
-  transition: opacity 0.28s, transform 0.28s;
-}
-@media (hover: hover) and (pointer: fine) {
   .placardHover {
     display: block;
   }
@@ -412,28 +518,40 @@
 }
 
 /* ======================================================================
- * Empty state and pager
+ * Empty state, pager, footer
  * ==================================================================== */
 .empty {
   font-family: var(--serif);
-  font-size: 22px;
+  font-size: 24px;
+  font-weight: 400;
   color: var(--muted);
-  padding: 56px 0 80px;
+  padding: 72px 0 96px;
 }
 .more {
   display: flex;
   justify-content: center;
-  padding-bottom: 28px;
+  padding-bottom: 40px;
 }
 .moreLink {
-  font-size: 14px;
-  color: var(--umber);
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 3px;
+  font-size: 13px;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  color: var(--brass);
+  padding: 11px 26px;
+  border: 1px solid var(--brass-dim);
+  border-radius: 999px;
+  transition: color 0.25s, background 0.25s, border-color 0.25s;
 }
 .moreLink:hover {
-  color: var(--ink);
-  border-bottom-color: var(--ink);
+  color: var(--ground);
+  background: var(--brass);
+  border-color: var(--brass);
+}
+.moreNote {
+  font-size: 13px;
+  font-weight: 200;
+  letter-spacing: 0.02em;
+  color: var(--muted);
 }
 /*
  * The trigger for the next page. It sits at the foot of the wall and is
@@ -445,34 +563,30 @@
   margin-top: -1px;
   pointer-events: none;
 }
-.moreNote {
-  font-size: 14px;
-  font-weight: 300;
-  color: var(--muted);
-}
 
-/* ======================================================================
- * Footer
- *
+/*
  * A flex row of the shell rather than an overlay, so it needs no clearance
  * padding and can never sit on top of the last painting. Kept slim: a
  * permanently visible band is height the paintings do not get.
- * ==================================================================== */
+ */
 .footer {
+  position: relative;
+  z-index: 2;
   flex: 0 0 auto;
   border-top: 1px solid var(--line);
-  padding: 10px var(--pad);
-  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  padding: 13px var(--pad);
+  padding-bottom: calc(13px + env(safe-area-inset-bottom, 0px));
   text-align: center;
-  font-size: 12.5px;
-  font-weight: 300;
+  font-size: 11.5px;
+  font-weight: 200;
+  letter-spacing: 0.03em;
   color: var(--muted-lt);
+  background: var(--ground);
 }
 .footerLink {
   color: var(--muted-lt);
-  border-bottom: 1px solid transparent;
+  transition: color 0.25s;
 }
 .footerLink:hover {
-  color: var(--ink-soft);
-  border-bottom-color: var(--line);
+  color: var(--brass);
 }

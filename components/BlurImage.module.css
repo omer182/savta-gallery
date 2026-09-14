@@ -2,7 +2,9 @@
   display: block;
   position: relative;
   overflow: hidden;
-  background: #efe9dc;
+  /* The hole in the wall before the painting arrives: darker than the room, so
+     an unloaded tile reads as depth rather than as a bright empty card. */
+  background: #0f0d0c;
 }
 
 /* Placeholder sits in flow and establishes the box; the real image is absolutely
@@ -52,10 +54,10 @@
   width: 100%;
   background: repeating-linear-gradient(
     45deg,
-    #efe9dc,
-    #efe9dc 10px,
-    #eae3d3 10px,
-    #eae3d3 20px
+    #171413,
+    #171413 10px,
+    #1d1917 10px,
+    #1d1917 20px
   );
 }
 .noneLabel {
@@ -65,7 +67,7 @@
   padding: 6px 9px;
   font-size: 11px;
   font-weight: 300;
-  color: var(--muted);
+  color: var(--muted, #8d8578);
 }
 
 @media (prefers-reduced-motion: reduce) {

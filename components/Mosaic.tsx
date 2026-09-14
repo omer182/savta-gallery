@@ -10,8 +10,12 @@ import {
 } from "react";
 import s from "./gallery.module.css";
 
-/** Matches the gutter on .grid in gallery.module.css. */
-const GUTTER = 28;
+/*
+ * Fallback gutter, used only if the computed style cannot be read. The real
+ * value comes from the grid itself, so the breakpoints in the stylesheet stay
+ * the single source of truth.
+ */
+const GUTTER_FALLBACK = 26;
 
 /** useLayoutEffect warns when it runs on the server, where it does nothing. */
 const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
@@ -43,6 +47,13 @@ export function Mosaic({ children }: { children: ReactNode }) {
     // The resolved row height, never the `gap` shorthand - reading the
     // shorthand off a computed style is what broke this the first time.
     const row = parseFloat(cs.gridAutoRows) || 4;
+    /*
+     * column-gap, not row-gap: `laid` sets row-gap to 0 and carries the
+     * vertical gutter inside each span instead, because an N-row span would
+     * otherwise also accumulate N-1 gaps and the arithmetic would drift. The
+     * column gap is the same measure and survives the switch.
+     */
+    const gutter = parseFloat(cs.columnGap) || GUTTER_FALLBACK;
     const cards = Array.from(grid.children) as HTMLElement[];
 
     /*
@@ -60,7 +71,7 @@ export function Mosaic({ children }: { children: ReactNode }) {
     cards.forEach((card, i) => {
       const h = heights[i] ?? 0;
       if (h <= 0) return; // not laid out yet; a later observer pass catches it
-      card.style.setProperty("--span", String(Math.ceil((h + GUTTER) / row)));
+      card.style.setProperty("--span", String(Math.ceil((h + gutter) / row)));
       measured = true;
     });
 
