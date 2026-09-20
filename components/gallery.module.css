@@ -328,29 +328,66 @@
   margin-top: 8px;
 }
 
-/* Over the painting. Both variants share this; only visibility differs. */
+/*
+ * Over the painting. Both variants share this; only visibility differs.
+ *
+ * The BASE is the touch size, and it is deliberately tiny.
+ *
+ * A phone tile is about 163px across at two columns, and this label is always
+ * on there — so at the desktop size it stood roughly 76px tall, which is the
+ * entire canvas of a wide painting (163 x 0.45 = 73px). The label was eating
+ * the work it was labelling.
+ *
+ * Halved, near enough exactly: ~38px against ~76px. The title drops to one
+ * line, since two lines of a long Hebrew title were most of that height.
+ */
 .placardOver {
   position: absolute;
-  inset-inline-start: 14px;
-  bottom: 14px;
-  max-width: calc(100% - 28px);
-  padding: 10px 14px;
+  inset-inline-start: 7px;
+  bottom: 7px;
+  max-width: calc(100% - 14px);
+  padding: 5px 8px;
   background: var(--placard);
   border: 1px solid var(--line);
   box-shadow: var(--sh-card);
 }
 .placardOver .placardTitle {
-  font-size: 17px;
-  line-height: 1.15;
-  /* Two lines at most, so a long title never creeps up the painting. */
+  font-size: 11.5px;
+  line-height: 1.2;
+  /* One line on a phone: a long title must not grow the label back. */
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 .placardOver .placardMeta {
-  font-size: 11px;
-  margin-top: 2px;
+  font-size: 9.5px;
+  line-height: 1.3;
+  margin-top: 1px;
+}
+
+/*
+ * A mouse gets the readable size. It can afford to: the tile is far wider at
+ * three columns, and the label is only on screen while a work is actually
+ * being approached rather than sitting on all of them at once.
+ */
+@media (hover: hover) and (pointer: fine) {
+  .placardOver {
+    inset-inline-start: 14px;
+    bottom: 14px;
+    max-width: calc(100% - 28px);
+    padding: 10px 14px;
+  }
+  .placardOver .placardTitle {
+    font-size: 17px;
+    line-height: 1.15;
+    -webkit-line-clamp: 2;
+  }
+  .placardOver .placardMeta {
+    font-size: 11px;
+    line-height: 1.4;
+    margin-top: 2px;
+  }
 }
 
 /*
