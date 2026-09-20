@@ -12,6 +12,13 @@
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
+  /*
+   * The back link sat flush against the top of the scroller while carrying
+   * 24px beneath it, so it read as stuck to the header rather than as its own
+   * line. This matches the space below it — which is .top's margin-top, and
+   * the two are kept equal at both breakpoints.
+   */
+  padding-top: 24px;
 }
 .back {
   font-size: 14px;
@@ -152,7 +159,14 @@
  * ==================================================================== */
 @media (min-width: 900px) {
   .detail {
-    --chrome: 300px;
+    /*
+     * 320, not 300: the padding above the back link is 20px of height the
+     * painting no longer gets, and --chrome is exactly the budget that is
+     * subtracted from the viewport to size it. Leaving it at 300 would push
+     * the bottom of the page off screen by that much.
+     */
+    --chrome: 320px;
+    padding-top: 20px;
   }
 
   /*
