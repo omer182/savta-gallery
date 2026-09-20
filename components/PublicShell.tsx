@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import s from "./gallery.module.css";
+import { SearchProvider } from "./SearchPanel";
 import { SiteFooter, SiteHeader } from "./SiteHeader";
 
 /**
@@ -19,12 +20,16 @@ export function PublicShell({
   children: ReactNode;
 }) {
   return (
-    <div className={s.shell}>
-      <div className={s.shellHead}>
-        <SiteHeader current={current} count={count} />
+    /* The provider wraps both, because the toggle is in the header and the
+       field is in the page - see SearchPanel.tsx. */
+    <SearchProvider>
+      <div className={s.shell}>
+        <div className={s.shellHead}>
+          <SiteHeader current={current} count={count} />
+        </div>
+        <main className={s.shellScroll}>{children}</main>
+        <SiteFooter />
       </div>
-      <main className={s.shellScroll}>{children}</main>
-      <SiteFooter />
-    </div>
+    </SearchProvider>
   );
 }

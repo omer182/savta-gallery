@@ -131,43 +131,116 @@
 
 /* ======================================================================
  * Search, in place above the tag strip
+ *
+ * A card in the same language as the placards — warm placard paper, a hairline
+ * of --line, the placard shadow — rather than a bare input with a rule under
+ * it. It reads as an object on the page, which is what the rest of the site
+ * is made of.
+ *
+ * It animates in BOTH directions, which is why the panel stays mounted and
+ * collapses with a 0fr/1fr grid row instead of a height: nothing has to know
+ * how tall the field is, and there is no jump at either end. The card also
+ * slides down out of its own clipped box, so it arrives rather than appears.
  * ==================================================================== */
-.searchbar {
-  padding-block: 20px 4px;
+.searchWrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 0.42s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.28s ease;
 }
-.searchbar input {
-  width: 100%;
+.searchOpen {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+/* min-height:0 is load-bearing: a grid child will not shrink below its content
+   without it, and the row would never collapse. */
+.searchInner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.searchField {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-block: 20px 4px;
+  padding: 13px 20px;
+  background: var(--placard);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: var(--sh-card);
+  transform: translateY(-10px);
+  transition: transform 0.42s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+.searchOpen .searchField {
+  transform: none;
+}
+/* focus-within, not :focus — the ring belongs to the card, not to the bare
+   input inside it, and the clear button is part of the same object. */
+.searchField:focus-within {
+  border-color: var(--umber);
+  box-shadow: var(--sh-lift);
+}
+
+.searchIcon {
+  flex: 0 0 auto;
+  color: var(--umber);
+  opacity: 0.75;
+}
+
+.searchField input {
+  flex: 1 1 auto;
+  min-width: 0;
   background: transparent;
   border: 0;
-  border-bottom: 1px solid var(--line);
   outline: none;
   font-family: var(--serif);
   font-weight: 400;
-  font-size: clamp(21px, 4.4vw, 30px);
-  line-height: 1.3;
+  font-size: clamp(17px, 3.4vw, 22px);
+  line-height: 1.4;
   color: var(--ink);
-  padding: 6px 2px 12px;
-  transition: border-color 0.3s ease;
+  padding: 2px 0;
 }
-.searchbar input::placeholder {
+.searchField input::placeholder {
   color: var(--muted-lt);
-}
-.searchbar input:focus {
-  border-bottom-color: var(--ink);
-}
-/* The rule under the field already shows focus; a second ring on top of it is
-   noise. Keyboard users still get the rule. */
-.searchbar input:focus-visible {
-  outline: none;
-}
-.searchCount {
-  margin-top: 10px;
-  font-size: 12.5px;
   font-weight: 300;
-  letter-spacing: 0.02em;
+}
+
+.searchCount {
+  flex: 0 0 auto;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 300;
   color: var(--muted);
-  /* Reserved, so the tag strip below does not jump as the count appears. */
-  min-height: 1.2em;
+  font-variant-numeric: tabular-nums;
+}
+
+.searchClear {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 28px box inside a 44px touch target: the row is tall enough that the
+     padding does the reaching, so the visible dot stays small. */
+  width: 28px;
+  height: 28px;
+  margin: -8px -6px -8px 0;
+  padding: 8px 6px 8px 0;
+  box-sizing: content-box;
+  color: var(--muted);
+  border-radius: 50%;
+  transition: color 0.2s ease;
+}
+.searchClear:hover {
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .searchWrap,
+  .searchField {
+    transition: none;
+  }
 }
 
 /* ======================================================================

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
+import { SearchToggle } from "./SearchPanel";
 import s from "./gallery.module.css";
 
 export const ARTIST_NAME = "בלומה שורצברג קמין";
@@ -14,8 +15,6 @@ export async function SiteHeader({ current, count }: { current?: string; count?:
   const items: Array<{ href: string; label: string; key: string }> = [
     { href: "/", label: "גלריה", key: "gallery" },
     { href: "/about", label: "אודות", key: "about" },
-    // Opens the field on the gallery rather than moving to a page of its own.
-    { href: "/?search=1", label: "חיפוש", key: "search" },
   ];
 
   return (
@@ -39,6 +38,9 @@ export async function SiteHeader({ current, count }: { current?: string; count?:
                 {i.label}
               </Link>
             ))}
+            {/* A button, not a link - it opens a panel on this page. It sits
+                here rather than in `items` because only it has state. */}
+            <SearchToggle />
             {session && (
               <Link href="/admin/add" className={`${s.navlink} ${s.navAdd}`}>
                 הוספת ציור

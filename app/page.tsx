@@ -20,11 +20,10 @@ export const dynamic = "force-dynamic";
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ tag?: string; page?: string; search?: string; q?: string }>;
+  searchParams: Promise<{ tag?: string; page?: string; q?: string }>;
 }) {
   const sp = await searchParams;
   const tag = sp.tag;
-  const searchOpen = sp.search === "1";
   const page = Math.max(1, Number(sp.page) || 1);
 
   const { items, hasMore } = listPublished({ tag, page });
@@ -34,10 +33,9 @@ export default async function Home({
   const tagHref = (slug?: string) => (slug ? `/?tag=${encodeURIComponent(slug)}` : "/");
 
   return (
-    <PublicShell current={searchOpen ? "search" : "gallery"} count={total}>
+    <PublicShell current="gallery" count={total}>
       <div className={s.wrap}>
         <GallerySearch
-          open={searchOpen}
           initialQuery={sp.q ?? ""}
           tags={
             <div className={s.tagbar}>
