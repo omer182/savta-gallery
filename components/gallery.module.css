@@ -338,22 +338,28 @@
  * entire canvas of a wide painting (163 x 0.45 = 73px). The label was eating
  * the work it was labelling.
  *
- * Halved, near enough exactly: ~38px against ~76px. The title drops to one
- * line, since two lines of a long Hebrew title were most of that height.
+ * Taken down twice. ~76px at the desktop size, ~37px after the first pass,
+ * ~25px now — a further 31%. Every part of it shrank rather than one: the
+ * padding and the leading matter as much as the type size at this scale.
+ *
+ * This is about as far as it goes while both lines stay on. Below roughly 8px
+ * the year and medium stop being readable on a phone and become a grey smudge
+ * with a border round it; the next move would be dropping that line and
+ * keeping the title alone.
  */
 .placardOver {
   position: absolute;
-  inset-inline-start: 7px;
-  bottom: 7px;
-  max-width: calc(100% - 14px);
-  padding: 5px 8px;
+  inset-inline-start: 5px;
+  bottom: 5px;
+  max-width: calc(100% - 10px);
+  padding: 2px 6px;
   background: var(--placard);
   border: 1px solid var(--line);
   box-shadow: var(--sh-card);
 }
 .placardOver .placardTitle {
-  font-size: 11.5px;
-  line-height: 1.2;
+  font-size: 9.5px;
+  line-height: 1.15;
   /* One line on a phone: a long title must not grow the label back. */
   display: -webkit-box;
   -webkit-line-clamp: 1;
@@ -361,8 +367,8 @@
   overflow: hidden;
 }
 .placardOver .placardMeta {
-  font-size: 9.5px;
-  line-height: 1.3;
+  font-size: 8px;
+  line-height: 1.2;
   margin-top: 1px;
 }
 
