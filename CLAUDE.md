@@ -10,7 +10,9 @@ Visual target: the **Hebrew RTL mock** —
 ## What this is
 
 - **Public**: masonry gallery, per-painting page with her story set large, About page,
-  `/search` as its own page, scrolling tag strip. Published paintings only, ~48/page.
+  scrolling tag strip. **Search is inline on the gallery** — `חיפוש` opens a field above
+  the tags and the results replace the wall; `/search` only redirects there now, so old
+  links keep working without a second copy of the field. Published paintings, ~48/page.
 - **Admin**: two users — `admin` (full) and `artist` (grandmother; no publish, no delete).
   No dashboard, no giant button: a logged-in artist gets one extra nav item, `הוספת ציור`
   (`admin` also gets `ניהול` → `/admin`). Admin screens stay inside the site's design

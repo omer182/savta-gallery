@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { GalleryFeed } from "@/components/GalleryFeed";
+import { GallerySearch } from "@/components/GallerySearch";
 import s from "@/components/gallery.module.css";
 import { PublicShell } from "@/components/PublicShell";
 import { toCardView } from "@/lib/cardView";
@@ -19,10 +20,11 @@ export const dynamic = "force-dynamic";
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ tag?: string; page?: string }>;
+  searchParams: Promise<{ tag?: string; page?: string; search?: string; q?: string }>;
 }) {
   const sp = await searchParams;
   const tag = sp.tag;
+  const searchOpen = sp.search === "1";
   const page = Math.max(1, Number(sp.page) || 1);
 
   const { items, hasMore } = listPublished({ tag, page });
@@ -32,40 +34,46 @@ export default async function Home({
   const tagHref = (slug?: string) => (slug ? `/?tag=${encodeURIComponent(slug)}` : "/");
 
   return (
-    <PublicShell current="gallery" count={total}>
+    <PublicShell current={searchOpen ? "search" : "gallery"} count={total}>
       <div className={s.wrap}>
-        <div className={s.tagbar}>
-          <div className={s.tagscroll}>
-            <Link href="/" className={`${s.tag} ${!tag ? s.tagOn : ""}`}>
-              הכול
-            </Link>
-            {allTags.map((t) => (
-              <Link
-                key={t.slug}
-                href={tagHref(t.slug)}
-                className={`${s.tag} ${tag === t.slug ? s.tagOn : ""}`}
-              >
-                {t.name}
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {items.length === 0 ? (
-          <div className={s.empty}>אין כאן ציורים עדיין.</div>
-        ) : (
+        <GallerySearch
+          open={searchOpen}
+          initialQuery={sp.q ?? ""}
+          tags={
+            <div className={s.tagbar}>
+              <div className={s.tagscroll}>
+                <Link href="/" className={`${s.tag} ${!tag ? s.tagOn : ""}`}>
+                  הכול
+                </Link>
+                {allTags.map((t) => (
+                  <Link
+                    key={t.slug}
+                    href={tagHref(t.slug)}
+                    className={`${s.tag} ${tag === t.slug ? s.tagOn : ""}`}
+                  >
+                    {t.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          }
+        >
+          {items.length === 0 ? (
+            <div className={s.empty}>אין כאן ציורים עדיין.</div>
+          ) : (
           /*
            * Keyed by tag so switching filters starts a fresh wall rather than
            * appending the new tag's first page onto the old tag's results.
            */
-          <GalleryFeed
-            key={tag ?? "all"}
-            initialItems={items.map(toCardView)}
-            initialHasMore={hasMore}
-            initialPage={page}
-            tag={tag}
-          />
-        )}
+            <GalleryFeed
+              key={tag ?? "all"}
+              initialItems={items.map(toCardView)}
+              initialHasMore={hasMore}
+              initialPage={page}
+              tag={tag}
+            />
+          )}
+        </GallerySearch>
       </div>
     </PublicShell>
   );

@@ -14,7 +14,8 @@ export async function SiteHeader({ current, count }: { current?: string; count?:
   const items: Array<{ href: string; label: string; key: string }> = [
     { href: "/", label: "גלריה", key: "gallery" },
     { href: "/about", label: "אודות", key: "about" },
-    { href: "/search", label: "חיפוש", key: "search" },
+    // Opens the field on the gallery rather than moving to a page of its own.
+    { href: "/?search=1", label: "חיפוש", key: "search" },
   ];
 
   return (
