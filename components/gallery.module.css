@@ -288,36 +288,16 @@
   }
 }
 
-/*
- * The caption under the frame: title and year, always visible, quiet. This is
- * what the placard on the painting is NOT — the placard is the full label and
- * waits to be asked for.
- */
-.cap {
-  margin: 8px 0 0;
-  font-family: var(--sans);
-  font-size: 12px;
-  font-weight: 300;
-  /* The mock sets .03em; Hebrew caps at .02em (§2). */
-  letter-spacing: 0.02em;
-  color: var(--muted);
-}
-.capTitle {
-  font-family: var(--serif);
-  font-size: 15px;
-  font-weight: 600;
-  color: #3a342b;
-}
-
 /* ======================================================================
  * Placard
  *
  * The mock's `.hoverLabel` — the full wall label, lying over the foot of the
  * painting, revealed on hover.
  *
- * A phone has no hover, so there the first tap reveals it and the second
- * opens the painting (CardLink.tsx). The title is still on screen either way,
- * in the caption beneath the frame.
+ * It is the ONLY label on the wall now: there is no caption under the tile.
+ * A phone has no hover and gets no label, because a touch there opens the
+ * painting outright — everything about the work is one tap away on its own
+ * page.
  * ==================================================================== */
 .placard {
   text-align: start;
@@ -374,25 +354,13 @@
 }
 
 /*
- * Touch: revealed by the first tap, and the second tap opens the painting
- * (CardLink.tsx). A phone has no hover, so the alternative was a label sitting
- * permanently over a corner of every painting on the wall.
+ * The label belongs to the mouse.
+ *
+ * It is hidden outright without a fine pointer: on a phone a touch means "open
+ * this", so there is nothing here to reveal and nothing sitting over the foot
+ * of every painting on the wall. The caption under each tile names the work on
+ * every device, so no painting is ever unlabelled.
  */
-.placardTap {
-  pointer-events: none;
-  opacity: 0;
-  transform: translateY(6px);
-  transition: opacity 0.28s, transform 0.28s;
-}
-.frame[data-revealed] .placardTap {
-  opacity: 1;
-  transform: none;
-}
-@media (hover: hover) and (pointer: fine) {
-  .placardTap {
-    display: none;
-  }
-}
 .placardHover {
   display: none;
   pointer-events: none;

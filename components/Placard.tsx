@@ -4,15 +4,14 @@ import s from "./gallery.module.css";
 /**
  * The wall label — PLAN.md §2's signature element.
  *
- * Three variants:
- *   tap    — over the foot of the painting, revealed by the first tap. Touch.
- *   hover  — the same position, revealed on hover. Mouse only.
- *   plain  — a paper label beside the work on the painting page.
+ * Two variants:
+ *   hover — over the foot of the painting, revealed on hover. Mouse only.
+ *   plain — a paper label beside the work on the painting page.
  *
- * A tile renders both `tap` and `hover` and lets the media queries pick; which
- * one applies depends on the pointer, which is not knowable on the server.
- * `hover` is marked aria-hidden so the pair never reads twice — the link is
- * already labelled by the image alt text.
+ * There is no touch variant. On a phone a tile's caption already names the
+ * work, and a touch there means "open this" — so the tile carries no label of
+ * its own to reveal. `hover` is marked aria-hidden because the link is already
+ * labelled by the image alt text.
  *
  * Source order stays logical (`1998 · שמן על בד`); under dir="rtl" bidi puts
  * the year at the inline-start edge, which is what a Hebrew placard wants.
@@ -23,7 +22,7 @@ export function Placard({
   medium,
   widthCm,
   heightCm,
-  variant = "tap",
+  variant = "hover",
   large = false,
   showTitle = true,
 }: {
@@ -32,7 +31,7 @@ export function Placard({
   medium: string | null;
   widthCm?: number | null;
   heightCm?: number | null;
-  variant?: "tap" | "hover" | "plain";
+  variant?: "hover" | "plain";
   large?: boolean;
   /** Off on the painting page, where the title is already the page heading. */
   showTitle?: boolean;
@@ -43,7 +42,6 @@ export function Placard({
   const cls = [
     s.placard,
     variant === "plain" ? s.placardPlain : s.placardOver,
-    variant === "tap" ? s.placardTap : "",
     variant === "hover" ? s.placardHover : "",
   ]
     .filter(Boolean)

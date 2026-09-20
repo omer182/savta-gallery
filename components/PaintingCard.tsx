@@ -1,16 +1,23 @@
+import Link from "next/link";
 import type { CardView } from "@/lib/cardView";
 import { BlurImage } from "./BlurImage";
-import { CardLink } from "./CardLink";
 import s from "./gallery.module.css";
 import { Placard } from "./Placard";
 
 /**
- * One painting in the mosaic, laid out as the mock's <figure>: the matted
- * frame, then a quiet caption beneath it.
+ * One painting in the mosaic. Nothing else - no caption, no frame furniture.
  *
- * The caption carries the title and year and is always on screen. The full
- * placard - title, year, medium - lies over the foot of the painting and waits
- * to be asked for: hover on a mouse, the first tap on a phone.
+ * The wall is paintings and only paintings. The label belongs to the mouse:
+ * hovering a work fades its title, year and medium in over the foot of the
+ * canvas. A phone gets no label at all, because there a touch means "open
+ * this", and making the first one mean something else puts a step between her
+ * and the painting.
+ *
+ * So on a phone the tile is the painting and nothing more, and everything
+ * about the work lives one tap away on its own page.
+ *
+ * A real <a href>: keyboard reachable, cmd-clickable, crawlable, with a
+ * visible focus ring (PLAN.md §2).
  *
  * Purely presentational, taking a precomputed CardView so it can also render
  * on the client (search results) without dragging sharp or Buffer along.
@@ -18,7 +25,7 @@ import { Placard } from "./Placard";
 export function PaintingCard({ p, priority = false }: { p: CardView; priority?: boolean }) {
   return (
     <>
-      <CardLink className={s.frame} href={p.href}>
+      <Link className={s.frame} href={p.href}>
         <BlurImage
           alt={p.title}
           avif={p.avif}
@@ -31,13 +38,8 @@ export function PaintingCard({ p, priority = false }: { p: CardView; priority?: 
           sizes="(min-width: 760px) 33vw, 50vw"
           priority={priority}
         />
-        <Placard title={p.title} year={p.year} medium={p.medium} variant="tap" />
         <Placard title={p.title} year={p.year} medium={p.medium} variant="hover" />
-      </CardLink>
-      <figcaption className={s.cap} dir="auto">
-        <span className={s.capTitle}>{p.title}</span>
-        {p.year ? `, ${p.year}` : ""}
-      </figcaption>
+      </Link>
     </>
   );
 }
