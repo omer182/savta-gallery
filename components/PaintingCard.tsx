@@ -5,16 +5,14 @@ import s from "./gallery.module.css";
 import { Placard } from "./Placard";
 
 /**
- * One painting in the mosaic. Nothing else - no caption, no frame furniture.
+ * One painting in the mosaic: the canvas, with its wall label on it. Nothing
+ * sits underneath - no caption, no frame furniture.
  *
- * The wall is paintings and only paintings. The label belongs to the mouse:
- * hovering a work fades its title, year and medium in over the foot of the
- * canvas. A phone gets no label at all, because there a touch means "open
- * this", and making the first one mean something else puts a step between her
- * and the painting.
- *
- * So on a phone the tile is the painting and nothing more, and everything
- * about the work lives one tap away on its own page.
+ * The label is the same on both surfaces, and only its timing differs. A mouse
+ * fades it in on hover, so a wide wall stays clean until a work is approached.
+ * A phone has no hover, so it is simply always there - and a tap anywhere on
+ * the tile opens the painting, label included. The obvious gesture does the
+ * obvious thing.
  *
  * A real <a href>: keyboard reachable, cmd-clickable, crawlable, with a
  * visible focus ring (PLAN.md §2).
@@ -38,6 +36,7 @@ export function PaintingCard({ p, priority = false }: { p: CardView; priority?: 
           sizes="(min-width: 760px) 33vw, 50vw"
           priority={priority}
         />
+        <Placard title={p.title} year={p.year} medium={p.medium} variant="static" />
         <Placard title={p.title} year={p.year} medium={p.medium} variant="hover" />
       </Link>
     </>

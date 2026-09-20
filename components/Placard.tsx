@@ -4,14 +4,19 @@ import s from "./gallery.module.css";
 /**
  * The wall label — PLAN.md §2's signature element.
  *
- * Two variants:
- *   hover — over the foot of the painting, revealed on hover. Mouse only.
- *   plain — a paper label beside the work on the painting page.
+ * Three variants:
+ *   static — over the foot of the painting, always on. Touch screens.
+ *   hover  — the same position, revealed on hover. Mouse only.
+ *   plain  — a paper label beside the work on the painting page.
  *
- * There is no touch variant. On a phone a tile's caption already names the
- * work, and a touch there means "open this" — so the tile carries no label of
- * its own to reveal. `hover` is marked aria-hidden because the link is already
- * labelled by the image alt text.
+ * A tile renders both `static` and `hover` and lets the media queries pick;
+ * which one applies depends on the pointer, which the server cannot know. Each
+ * hides the other with display:none, so exactly one is ever in the
+ * accessibility tree. `hover` is additionally aria-hidden because the link is
+ * already labelled by the image alt text.
+ *
+ * Neither is a control: a tap anywhere on the tile opens the painting, and the
+ * label never intercepts it.
  *
  * Source order stays logical (`1998 · שמן על בד`); under dir="rtl" bidi puts
  * the year at the inline-start edge, which is what a Hebrew placard wants.
@@ -22,7 +27,7 @@ export function Placard({
   medium,
   widthCm,
   heightCm,
-  variant = "hover",
+  variant = "static",
   large = false,
   showTitle = true,
 }: {
@@ -31,7 +36,7 @@ export function Placard({
   medium: string | null;
   widthCm?: number | null;
   heightCm?: number | null;
-  variant?: "hover" | "plain";
+  variant?: "static" | "hover" | "plain";
   large?: boolean;
   /** Off on the painting page, where the title is already the page heading. */
   showTitle?: boolean;
@@ -42,6 +47,7 @@ export function Placard({
   const cls = [
     s.placard,
     variant === "plain" ? s.placardPlain : s.placardOver,
+    variant === "static" ? s.placardStatic : "",
     variant === "hover" ? s.placardHover : "",
   ]
     .filter(Boolean)

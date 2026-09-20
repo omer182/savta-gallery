@@ -354,13 +354,23 @@
 }
 
 /*
- * The label belongs to the mouse.
+ * Touch: always on. There is no hover to wait for and no tap to spend - the
+ * tap opens the painting - so the label simply sits on the canvas.
  *
- * It is hidden outright without a fine pointer: on a phone a touch means "open
- * this", so there is nothing here to reveal and nothing sitting over the foot
- * of every painting on the wall. The caption under each tile names the work on
- * every device, so no painting is ever unlabelled.
+ * pointer-events:none so it can never swallow that tap: the whole tile stays
+ * one target.
  */
+.placardStatic {
+  pointer-events: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .placardStatic {
+    display: none;
+  }
+}
+
+/* Mouse: fades in on hover, so a wide wall stays clean until a work is
+   approached. Hidden outright where there is no pointer to hover with. */
 .placardHover {
   display: none;
   pointer-events: none;

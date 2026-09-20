@@ -44,10 +44,9 @@ Cloudflare owned by the user. All state is `/data` (db + images); off-site backu
   start/end`). Nothing pinned to a physical side. `dir="auto"` on user-entered text.
 - Masonry is **CSS Grid row-spans**, never `columns` — `columns` fills column-by-column and
   scrambles `sort_order`. 2 cols on phones, 3 from 640px.
-- **The wall is paintings only.** No caption under a tile. The placard is a hover label
-  on the canvas and belongs to the mouse; a phone shows no label at all, because a touch
-  there opens the painting — a first tap that means anything else puts a step between her
-  and the work. Superseded the earlier "visible without hover on touch" rule by decision.
+- **No caption under a tile** — the label lives ON the canvas. It is **always visible on
+  touch** and hover-revealed on a mouse; either way it is `pointer-events: none`, because
+  a tap anywhere on a tile opens the painting. No first tap ever means anything else.
 - Grid cards are real `<a href>` — keyboard reachable, crawlable, visible focus ring.
 - **One painting, one image.** No multi-image UI anywhere — no thumbnail strip on the
   painting page, no second upload in the editor. Enforced in `attachImages()`: the
