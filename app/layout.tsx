@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Assistant, Frank_Ruhl_Libre } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 /*
@@ -21,6 +22,27 @@ const assistant = Assistant({
   display: "swap",
 });
 
+
+/*
+ * Anka CLM - the artist's name in the header, and nothing else.
+ *
+ * Self-hosted from app/fonts rather than Google, because it is not there. It
+ * is GPL v2 with no font-exception clause, so the licence sits beside it in
+ * the repo; see app/fonts/README.md.
+ *
+ * Scoped to one line of text on purpose: the face carries 28 Hebrew letters
+ * and the ten digits but only five Latin ones, and ships a single weight. Used
+ * anywhere with mixed text it would fall through to another font mid-sentence.
+ * The fallback chain is Hebrew-capable for exactly that reason.
+ */
+const anka = localFont({
+  src: "./fonts/ankaclm-bold.woff2",
+  weight: "700",
+  style: "normal",
+  variable: "--font-anka",
+  display: "swap",
+  fallback: ["David", "Georgia", "serif"],
+});
 
 /*
  * Deliberately a CLASSIC script in ES5 — no arrow functions, no template
@@ -71,8 +93,8 @@ const CLIENT_PROBE = [
 ].join("");
 
 export const metadata: Metadata = {
-  title: "בלומה שוורצברג קמין",
-  description: "ארכיון הציורים של בלומה שוורצברג קמין — חמישים שנות עבודה, והסיפורים שמאחוריהם.",
+  title: "בלומה שורצברג קמין",
+  description: "ארכיון הציורים של בלומה שורצברג קמין — חמישים שנות עבודה, והסיפורים שמאחוריהם.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -92,7 +114,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="he"
       dir="rtl"
-      className={`${frank.variable} ${assistant.variable}`}
+      className={`${frank.variable} ${assistant.variable} ${anka.variable}`}
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>

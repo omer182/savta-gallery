@@ -37,8 +37,10 @@ Cloudflare owned by the user. All state is `/data` (db + images); off-site backu
 - Design system in PLAN.md §2 is **locked**. Warm paper `#F7F4EE`, ink `#1C1A15`, umber
   `#6E5A3A`. The site disappears; the paintings are the design.
 - **The whole site is Hebrew and RTL** — chrome included, not just content. Type is
-  **Frank Ruhl Libre** (display + story) and **Assistant** (UI). Cormorant Garamond and
-  Karla are **retired**: neither ships Hebrew glyphs. Hebrew has no uppercase, so build
+  **Frank Ruhl Libre** (display + story) and **Assistant** (UI), plus **Anka CLM** for
+  the artist name in the header and nothing else — it has one weight and only five Latin
+  letters, so it cannot set anything but that one Hebrew line (`app/fonts/README.md`).
+  Cormorant Garamond and Karla are **retired**: neither ships Hebrew glyphs. Hebrew has no uppercase, so build
   label hierarchy from size/weight/colour, and cap tracking at ~`.02em`.
 - Use **logical CSS properties** (`inset-inline-start`, `padding-inline`, `text-align:
   start/end`). Nothing pinned to a physical side. `dir="auto"` on user-entered text.

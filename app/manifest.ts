@@ -9,9 +9,9 @@ import type { MetadataRoute } from "next";
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "בלומה שוורצברג קמין",
+    name: "בלומה שורצברג קמין",
     short_name: "בלומה",
-    description: "ארכיון הציורים של בלומה שוורצברג קמין",
+    description: "ארכיון הציורים של בלומה שורצברג קמין",
     start_url: "/",
     display: "standalone",
     dir: "rtl",

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import s from "./gallery.module.css";
 
-export const ARTIST_NAME = "בלומה שוורצברג קמין";
+export const ARTIST_NAME = "בלומה שורצברג קמין";
 
 /**
  * Nav is `גלריה · אודות · חיפוש` for visitors. A logged-in artist gains one

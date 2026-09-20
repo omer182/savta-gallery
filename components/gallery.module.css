@@ -66,8 +66,14 @@
 }
 .marque h1 {
   margin: 0;
-  font-family: var(--serif);
-  font-weight: 600;
+  /*
+   * Anka CLM, falling back to the site serif. It exists in one weight only, so
+   * 700 is declared rather than 600 - asking for a weight the face does not
+   * have invites the browser to synthesise a fake bold on top of an already
+   * bold display face.
+   */
+  font-family: var(--font-anka), var(--serif);
+  font-weight: 700;
   font-size: clamp(26px, 6vw, 42px);
   line-height: 1.15;
   text-wrap: balance;

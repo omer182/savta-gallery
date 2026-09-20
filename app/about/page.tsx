@@ -41,7 +41,7 @@ export default async function AboutPage() {
             {portrait?.derivedHash ? (
               <div className={s.portraitFrame}>
                 <BlurImage
-                  alt="בלומה שוורצברג קמין"
+                  alt="בלומה שורצברג קמין"
                   avif={portrait.width ? srcSet(portrait.derivedHash, portrait.width, "avif") : null}
                   webp={portrait.width ? srcSet(portrait.derivedHash, portrait.width, "webp") : null}
                   fallback={fallbackUrl(portrait.derivedHash)}
@@ -57,7 +57,7 @@ export default async function AboutPage() {
                 <span className={s.portraitMark}>ב</span>
               </div>
             )}
-            <figcaption className={s.portraitCaption}>בלומה שוורצברג קמין</figcaption>
+            <figcaption className={s.portraitCaption}>בלומה שורצברג קמין</figcaption>
           </figure>
 
           {paragraphs.length ? (
