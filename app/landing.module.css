@@ -26,12 +26,22 @@
   z-index: 0;
   pointer-events: none;
 }
+/*
+ * The incoming painting fades in ON TOP of the outgoing one, which is what
+ * the z-index is for.
+ *
+ * Without it both plates sit at partial opacity through the middle of the
+ * crossfade, the paper shows between them, and the whole screen visibly
+ * lightens and then settles. Raising the active plate means the old painting
+ * stays fully opaque underneath until the new one has covered it, so the
+ * transition is a clean fade from one work to the next.
+ */
 .plate {
   position: absolute;
   inset: 0;
+  z-index: 0;
   opacity: 0;
-  /* Long, because this is meant to be noticed only if you look for it. */
-  transition: opacity 2s ease-in-out;
+  transition: opacity 2.2s ease-in-out;
 }
 .plate img {
   width: 100%;
@@ -45,6 +55,7 @@
   transition: transform 9s linear;
 }
 .plateOn {
+  z-index: 1;
   opacity: 1;
 }
 .plateOn img {
@@ -52,19 +63,34 @@
 }
 
 /*
- * Heaviest where the words sit, lightest at the edges: the painting reads as
- * colour around the outside while the reading area stays close to paper, so
- * the ink keeps its contrast whatever is underneath.
+ * Two layers, because they protect two different things.
+ *
+ * The radial keeps the paper behind her name: 0.86 at the centre still leaves
+ * better than 11:1 against ink over even a black painting, and it falls away
+ * to 0.3 at the edges so the work is genuinely visible rather than a rumour.
+ * It was 0.94/0.7 before, which hid the paintings so completely that the
+ * crossfade could not be seen at all.
+ *
+ * The linear protects the footer, which sits in the lightest part of the
+ * radial and is small, thin, muted type - the one thing here that a dark
+ * painting underneath would actually make unreadable.
  */
 .veil {
   position: absolute;
   inset: 0;
-  background: radial-gradient(
-    115% 85% at 50% 42%,
-    rgba(247, 244, 238, 0.94) 0%,
-    rgba(247, 244, 238, 0.87) 42%,
-    rgba(247, 244, 238, 0.7) 100%
-  );
+  background:
+    linear-gradient(
+      to top,
+      rgba(247, 244, 238, 0.96) 0%,
+      rgba(247, 244, 238, 0.86) 8%,
+      rgba(247, 244, 238, 0) 26%
+    ),
+    radial-gradient(
+      110% 82% at 50% 44%,
+      rgba(247, 244, 238, 0.86) 0%,
+      rgba(247, 244, 238, 0.66) 45%,
+      rgba(247, 244, 238, 0.3) 100%
+    );
 }
 
 /* ======================================================================
@@ -137,16 +163,6 @@
   transform: translateX(-4px);
 }
 
-.count {
-  margin: 34px 0 0;
-  font-family: var(--sans);
-  font-size: 12px;
-  font-weight: 300;
-  letter-spacing: 0.02em;
-  color: var(--muted-lt);
-  font-variant-numeric: tabular-nums;
-}
-
 /* ======================================================================
  * Footer
  * ==================================================================== */
@@ -196,15 +212,11 @@
  * fill-mode `both` leaves everything visible if it never starts at all.
  * ==================================================================== */
 .name,
-.actions,
-.count {
+.actions {
   animation: arrive 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 .actions {
   animation-delay: 0.16s;
-}
-.count {
-  animation-delay: 0.28s;
 }
 @keyframes arrive {
   from {
@@ -219,8 +231,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .name,
-  .actions,
-  .count {
+  .actions {
     animation: none;
   }
   .plate,

@@ -3,7 +3,7 @@ import { HeroBackdrop, type Plate } from "@/components/HeroBackdrop";
 import { ARTIST_NAME } from "@/components/SiteHeader";
 import { getSession } from "@/lib/auth";
 import { fallbackUrl, srcSet } from "@/lib/imageUrls";
-import { countPublished, randomPublished } from "@/lib/queries";
+import { randomPublished } from "@/lib/queries";
 import { APP_VERSION } from "@/lib/version";
 import s from "./landing.module.css";
 
@@ -12,8 +12,8 @@ import s from "./landing.module.css";
  *
  * The gallery is fifty years of work; opening straight onto five hundred
  * paintings gives a visitor nowhere to stand. This is the pause before that —
- * her name, how much there is, and one way in. Deliberately nothing else: a
- * door with a paragraph on it is not a door.
+ * her name and one way in. Deliberately nothing else — not a count, not a
+ * sentence about the work. A door with copy on it is not a door.
  *
  * Never prerendered, for the same two reasons every public page is dynamic:
  * the session is read here, and a prerender would run its queries at BUILD
@@ -24,7 +24,6 @@ export const dynamic = "force-dynamic";
 
 export default async function Landing() {
   const session = await getSession();
-  const total = countPublished();
 
   const plates: Plate[] = randomPublished(6)
     .filter((p) => p.derivedHash)
@@ -51,12 +50,6 @@ export default async function Landing() {
             </span>
           </Link>
         </div>
-
-        {total > 0 && (
-          <p className={s.count}>
-            {total} {total === 1 ? "ציור בארכיון" : "ציורים בארכיון"}
-          </p>
-        )}
       </main>
 
       <footer className={s.foot}>
