@@ -152,23 +152,41 @@
   grid-template-rows: 1fr;
   opacity: 1;
 }
-/* min-height:0 is load-bearing: a grid child will not shrink below its content
-   without it, and the row would never collapse. */
 .searchInner {
+  /* min-height:0 is load-bearing: a grid child will not shrink below its
+     content without it, and the row would never collapse. */
   min-height: 0;
+  /*
+   * The clip is what lets the row collapse — and it was also slicing the
+   * card's shadow off, hard, along the bottom and both sides.
+   *
+   * The padding gives the shadow room to fall inside the clip; the negative
+   * margin takes that room straight back out of the layout, so the card still
+   * spans the full width of the wall and the tag strip does not get pushed
+   * down. 18px is inside --pad at every breakpoint, so nothing reaches past
+   * the page gutter and no horizontal scrollbar appears.
+   */
   overflow: hidden;
+  padding: 0 18px 18px;
+  margin-inline: -18px;
 }
 
 .searchField {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-block: 20px 4px;
+  margin-block: 18px 0;
   padding: 13px 20px;
   background: var(--placard);
   border: 1px solid var(--line);
   border-radius: 999px;
-  box-shadow: var(--sh-card);
+  /*
+   * Its own shadow, not --sh-card or --sh-lift. Those are sized to lift a
+   * painting off the wall — a 44px blur under a text field reads as a smudge,
+   * and it reached far further than the clip above can accommodate. This one
+   * stops within 16px, inside the padding.
+   */
+  box-shadow: 0 1px 2px rgba(40, 32, 20, 0.05), 0 4px 12px rgba(40, 32, 20, 0.055);
   transform: translateY(-10px);
   transition: transform 0.42s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s ease,
     box-shadow 0.25s ease;
@@ -178,9 +196,15 @@
 }
 /* focus-within, not :focus — the ring belongs to the card, not to the bare
    input inside it, and the clear button is part of the same object. */
+/*
+ * Focus is a ring, not a bigger shadow. Growing the shadow on focus is what
+ * made the clipped edge so obvious — and a ring says "this is where you are
+ * typing" far more clearly than a deeper drop shadow does.
+ */
 .searchField:focus-within {
   border-color: var(--umber);
-  box-shadow: var(--sh-lift);
+  box-shadow: 0 1px 2px rgba(40, 32, 20, 0.05), 0 4px 12px rgba(40, 32, 20, 0.055),
+    0 0 0 3px rgba(110, 90, 58, 0.12);
 }
 
 .searchIcon {
