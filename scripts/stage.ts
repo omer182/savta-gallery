@@ -1,6 +1,7 @@
 /**
  * Stage a painting — the prototype front end for lib/staging.ts.
  *
+ *   npm run stage -- --latest                 the painting added most recently
  *   npm run stage -- --painting 12            a painting already in the archive
  *   npm run stage -- --file D:/photo.jpg      any image on disk
  *   npm run stage -- --painting 12 --scene wall --out out.jpg
@@ -43,6 +44,28 @@ function fromPainting(id: number): Job {
 
   if (!row?.hash) throw new Error(`painting ${id} has no processed image`);
   return { label: `${id}-${row.title}`, file: derivedPath(row.hash) };
+}
+
+/**
+ * The most recently added painting - which is the one just uploaded, since
+ * createPainting sorts new work to the FRONT (sortOrder = min - 1). Ordering
+ * by id rather than sortOrder is therefore deliberate: id is when it arrived,
+ * sortOrder is where it hangs, and those are not the same question.
+ */
+function latest(): Job {
+  const row = db
+    .select({ id: paintings.id, title: paintings.title, hash: images.derivedHash })
+    .from(paintings)
+    .innerJoin(images, eq(images.paintingId, paintings.id))
+    .where(isNotNull(images.derivedHash))
+    .orderBy(desc(paintings.id))
+    .get();
+
+  if (!row?.hash) {
+    throw new Error("no painting with a processed image yet - has the upload finished?");
+  }
+  console.log(`  painting ${row.id}: ${row.title}`);
+  return { label: `${row.id}-${row.title}`, file: derivedPath(row.hash) };
 }
 
 /** A spread of shapes rather than the first N, so the range is what gets judged. */
@@ -91,7 +114,9 @@ async function main() {
     ? [{ label: path.parse(file).name, file }]
     : painting
       ? [fromPainting(Number(painting))]
-      : sample(Number(all) || 5);
+      : process.argv.includes("--latest")
+        ? [latest()]
+        : sample(Number(all) || 5);
 
   if (!jobs.length) {
     console.error("nothing to stage - pass --file, --painting <id>, or seed the archive first");
