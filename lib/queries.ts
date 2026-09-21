@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { db, images, pages, paintings, paintingTags, tags } from "@/db";
 
 export const PAGE_SIZE = 48;
@@ -62,6 +62,25 @@ export function listPublished({ tag, page = 1 }: { tag?: string; page?: number }
 
   const rows = base.all() as CardPainting[];
   return { items: rows.slice(0, PAGE_SIZE), hasMore: rows.length > PAGE_SIZE };
+}
+
+/**
+ * A random handful of published work, for the front door.
+ *
+ * Random in SQL rather than by shuffling a full list in JS: the archive runs
+ * to ~500 rows and the landing page needs six of them. Rows without a
+ * processed image are excluded outright - a blank plate in a slideshow is
+ * worse than a shorter slideshow.
+ */
+export function randomPublished(n = 6) {
+  return db
+    .select(cardColumns)
+    .from(paintings)
+    .leftJoin(images, primaryImageJoin)
+    .where(and(eq(paintings.status, "published"), isNotNull(images.derivedHash)))
+    .orderBy(sql`random()`)
+    .limit(n)
+    .all() as CardPainting[];
 }
 
 export function countPublished() {

@@ -372,7 +372,7 @@ export function AddFlow({
             <span>בחרי תמונה</span>
           </label>
           <div className={s.backRow}>
-            <Link className={s.backLink} href="/">
+            <Link className={s.backLink} href="/gallery">
               → חזרה לגלריה
             </Link>
             {isAdmin && (
@@ -632,7 +632,7 @@ export function AddFlow({
           <button className={a.btn} onClick={startAnother} type="button">
             הוספת ציור נוסף
           </button>
-          <Link className={`${a.btn} ${a.btnQuiet}`} style={{ marginTop: 10 }} href="/">
+          <Link className={`${a.btn} ${a.btnQuiet}`} style={{ marginTop: 10 }} href="/gallery">
             → חזרה לגלריה
           </Link>
           {isAdmin && (

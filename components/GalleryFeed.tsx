@@ -85,7 +85,7 @@ export function GalleryFeed({
     return () => io.disconnect();
   }, [hasMore, failed, loadMore]);
 
-  const nextHref = `${tag ? `/?tag=${encodeURIComponent(tag)}&` : "/?"}page=${page + 1}`;
+  const nextHref = `/gallery?${tag ? `tag=${encodeURIComponent(tag)}&` : ""}page=${page + 1}`;
 
   return (
     <>

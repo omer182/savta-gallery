@@ -133,7 +133,7 @@ export default function LoginPage() {
       </form>
 
       <div className={s.back}>
-        <Link className={s.backLink} href="/">
+        <Link className={s.backLink} href="/gallery">
           → חזרה לגלריה
         </Link>
       </div>

@@ -133,7 +133,7 @@ export default async function PaintingPage({ params }: { params: Promise<{ slug:
           gives the pager a bottom edge to sit against on a short painting. */}
       <div className={`${g.wrap} ${s.fill}`}>
         <div className={s.detail}>
-          <Link className={s.back} href="/">
+          <Link className={s.back} href="/gallery">
             → חזרה לגלריה
           </Link>
 
@@ -196,7 +196,7 @@ export default async function PaintingPage({ params }: { params: Promise<{ slug:
                 {tags.length > 0 && (
                   <div className={s.taglist}>
                     {tags.map((t) => (
-                      <Link key={t.slug} href={`/?tag=${encodeURIComponent(t.slug)}`}>
+                      <Link key={t.slug} href={`/gallery?tag=${encodeURIComponent(t.slug)}`}>
                         {t.name}
                       </Link>
                     ))}

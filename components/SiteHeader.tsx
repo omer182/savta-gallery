@@ -14,7 +14,7 @@ export async function SiteHeader({ current, count }: { current?: string; count?:
   const session = await getSession();
 
   const items: Array<{ href: string; label: string; key: string }> = [
-    { href: "/", label: "גלריה", key: "gallery" },
+    { href: "/gallery", label: "גלריה", key: "gallery" },
     { href: "/about", label: "אודות", key: "about" },
   ];
 
@@ -22,7 +22,7 @@ export async function SiteHeader({ current, count }: { current?: string; count?:
     <>
       <header className={`${s.head} ${s.wrap}`}>
         <div className={s.headRow}>
-          <Link className={s.marque} href="/">
+          <Link className={s.marque} href="/gallery">
             <h1>{ARTIST_NAME}</h1>
             {count !== undefined && (
               <div className={s.sub}>{count} ציורים · 1974–2026</div>

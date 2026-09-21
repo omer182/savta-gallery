@@ -9,7 +9,9 @@ Visual target: the **Hebrew RTL mock** —
 
 ## What this is
 
-- **Public**: masonry gallery, per-painting page with her story set large, About page,
+- **Public**: a **front door at `/`** — her name over a slow random crossfade of her own
+  paintings, and one CTA into the gallery; the wall itself lives at **`/gallery`**. Then
+  the masonry gallery, per-painting page with her story set large, About page,
   scrolling tag strip. **Search is inline on the gallery** — `חיפוש` opens a field above
   the tags and the results replace the wall; `/search` only redirects there now, so old
   links keep working without a second copy of the field. Published paintings, ~48/page.

@@ -14,5 +14,5 @@ export default async function SearchPage({
 }) {
   const { q } = await searchParams;
   const term = q?.trim();
-  redirect(term ? `/?search=1&q=${encodeURIComponent(term)}` : "/?search=1");
+  redirect(term ? `/gallery?search=1&q=${encodeURIComponent(term)}` : "/gallery?search=1");
 }
