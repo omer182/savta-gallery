@@ -133,18 +133,33 @@
 .veil {
   position: absolute;
   inset: 0;
+  /*
+   * ABOVE every plate, including the active one.
+   *
+   * This was the light jump. .plateOn carries z-index 1 and the veil carried
+   * none, so within .backdrop the active plate painted ABOVE the veil while
+   * the other five painted below it. The visible painting was therefore not
+   * veiled at all — and the instant it handed over it lost z-index 1, dropped
+   * under the veil and was covered in light paper, one frame before the new
+   * one faded in. A flash, every cycle.
+   *
+   * Fixing it also fixes the contrast: until now the veil was never actually
+   * over the painting anyone was looking at, which is why dark work kept
+   * swallowing the type.
+   */
+  z-index: 2;
   background:
     linear-gradient(
       to top,
-      rgba(247, 244, 238, 0.96) 0%,
-      rgba(247, 244, 238, 0.86) 8%,
-      rgba(247, 244, 238, 0) 26%
+      rgba(247, 244, 238, 0.97) 0%,
+      rgba(247, 244, 238, 0.88) 10%,
+      rgba(247, 244, 238, 0) 30%
     ),
     radial-gradient(
       110% 82% at 50% 44%,
-      rgba(247, 244, 238, 0.74) 0%,
-      rgba(247, 244, 238, 0.58) 45%,
-      rgba(247, 244, 238, 0.26) 100%
+      rgba(247, 244, 238, 0.52) 0%,
+      rgba(247, 244, 238, 0.38) 45%,
+      rgba(247, 244, 238, 0.12) 100%
     );
 }
 
