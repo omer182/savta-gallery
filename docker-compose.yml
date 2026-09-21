@@ -5,6 +5,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Matches what CI bakes in; harmless if git is unavailable.
+        APP_VERSION: ${APP_VERSION:-local}
     # Bound to loopback: nginx is the only thing that should reach it.
     ports:
       - "127.0.0.1:3006:3000"

@@ -20,6 +20,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Tags and history, or `git describe` below has nothing to describe:
+          # the default shallow clone fetches neither.
+          fetch-depth: 0
+
+      - name: Resolve version
+        id: version
+        run: |
+          echo "value=$(git describe --tags --always --dirty)" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -48,6 +57,8 @@ jobs:
           context: .
           platforms: linux/amd64
           push: true
+          build-args: |
+            APP_VERSION=${{ steps.version.outputs.value }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha

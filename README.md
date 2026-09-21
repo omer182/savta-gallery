@@ -95,12 +95,22 @@ frames — for imported paintings they still show the wall and the numbered
 sticky note — and the app gates them behind an admin session. Serving them from
 disk would bypass that.
 
-### 3. Updating
+### 3. Which version is live
+
+The running build is printed in the bottom-left of the site footer. It comes
+from `git describe --tags` at image build time, so it names a real point in
+history — `v0.4.0` on a tagged build, `v0.4.0-3-g902650a` three commits past
+one — and is baked into the image rather than read from `package.json`, which
+would only ever say whatever number was last typed there by hand.
+
+Locally it reads `dev`, because the value is simply absent.
+
+### 4. Updating
 
 Push to `main`, wait for the Action, then **Stacks → savta-gallery → Pull and
 redeploy**. Migrations run automatically on container start.
 
-### 4. Standing up a demo wall
+### 5. Standing up a demo wall
 
 A fresh `/data` is empty, so the gallery has nothing to show. To fill it with
 twenty generated paintings — five subjects, five media, proportions from a

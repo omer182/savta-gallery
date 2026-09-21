@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
+import { APP_VERSION } from "@/lib/version";
 import { SearchToggle } from "./SearchPanel";
 import s from "./gallery.module.css";
 
@@ -64,19 +65,30 @@ export async function SiteFooter() {
 
   return (
     <footer className={s.footer}>
-      © {new Date().getFullYear()} {ARTIST_NAME} · כל הציורים נותרים ברשות האמנית
-      {/* Deliberately in the footer, not the nav: this is a public gallery, and
-          a "log in" next to גלריה/אודות would read as an app. Quiet enough that
-          a visitor never notices it, findable enough that she is not typing a
-          URL from memory on a phone. */}
-      {!session && (
-        <>
-          {" · "}
-          <Link href="/login" className={s.footerLink}>
-            כניסה
-          </Link>
-        </>
-      )}
+      <div className={s.footerMain}>
+        © {new Date().getFullYear()} {ARTIST_NAME} · כל הציורים נותרים ברשות האמנית
+        {/* Deliberately in the footer, not the nav: this is a public gallery, and
+            a "log in" next to גלריה/אודות would read as an app. Quiet enough that
+            a visitor never notices it, findable enough that she is not typing a
+            URL from memory on a phone. */}
+        {!session && (
+          <>
+            {" · "}
+            <Link href="/login" className={s.footerLink}>
+              כניסה
+            </Link>
+          </>
+        )}
+      </div>
+
+      {/*
+        Which build this is, so a deploy can be confirmed from the phone rather
+        than inferred. dir="ltr" because a version is a Latin/numeric token and
+        RTL bidi would otherwise reorder it into nonsense.
+      */}
+      <span className={s.version} dir="ltr" title="גרסה">
+        {APP_VERSION}
+      </span>
     </footer>
   );
 }

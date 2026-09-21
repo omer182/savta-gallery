@@ -20,6 +20,12 @@ RUN npm run build && npm run build:scripts
 
 FROM node:22-slim AS runner
 WORKDIR /app
+
+# What is actually running, surfaced in the site footer. Supplied by CI from
+# `git describe`; "dev" when someone builds this by hand without passing it.
+ARG APP_VERSION=dev
+ENV APP_VERSION=$APP_VERSION
+
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
