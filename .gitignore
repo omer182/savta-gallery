@@ -52,3 +52,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Staged renders from `npm run stage` - output of a prototype, not source.
+/staged/

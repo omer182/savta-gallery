@@ -19,7 +19,8 @@
     "test:session": "tsx scripts/make-test-session.ts",
     "build:scripts": "node scripts/build-scripts.mjs",
     "db:seed-about": "tsx scripts/seed-about.ts",
-    "db:seed-demo": "tsx scripts/seed-demo.ts"
+    "db:seed-demo": "tsx scripts/seed-demo.ts",
+    "stage": "tsx scripts/stage.ts"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.0",
