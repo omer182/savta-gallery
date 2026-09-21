@@ -27,21 +27,27 @@
   pointer-events: none;
 }
 /*
- * The incoming painting fades in ON TOP of the outgoing one, which is what
- * the z-index is for.
+ * Only the arriving painting fades. The leaving one does not fade at all.
  *
- * Without it both plates sit at partial opacity through the middle of the
- * crossfade, the paper shows between them, and the whole screen visibly
- * lightens and then settles. Raising the active plate means the old painting
- * stays fully opaque underneath until the new one has covered it, so the
- * transition is a clean fade from one work to the next.
+ * A plain crossfade lightens visibly in the middle, and the arithmetic says
+ * why: with the old plate at 0.5 over paper and the new plate at 0.5 over
+ * that, the composite is 0.5·new + 0.25·old + 0.25·PAPER. A quarter of the
+ * background leaks through at the midpoint, which is the jump.
+ *
+ * So the leaving plate holds full opacity and then drops to zero in one step,
+ * by which time it is completely hidden underneath the arriving one. Its
+ * transition is `0s ... 2.4s` — no duration, only a delay — and the 0.2s
+ * margin over the 2.2s fade makes sure the cover is complete before the drop.
+ *
+ * The z-index is what makes that safe: the arriving plate is always on top,
+ * so the old painting sitting at full opacity underneath is never seen.
  */
 .plate {
   position: absolute;
   inset: 0;
   z-index: 0;
   opacity: 0;
-  transition: opacity 2.2s ease-in-out;
+  transition: opacity 0s linear 2.4s;
 }
 .plate img {
   width: 100%;
@@ -78,6 +84,26 @@
 .plate:nth-child(even) img {
   animation-direction: alternate-reverse;
 }
+/*
+ * Negative delays start each plate part-way through its own drift, so every
+ * painting arrives at a different point in the movement instead of all six
+ * running in lockstep and turning at the same instant.
+ */
+.plate:nth-child(2) img {
+  animation-delay: -3s;
+}
+.plate:nth-child(3) img {
+  animation-delay: -7s;
+}
+.plate:nth-child(4) img {
+  animation-delay: -11s;
+}
+.plate:nth-child(5) img {
+  animation-delay: -15s;
+}
+.plate:nth-child(6) img {
+  animation-delay: -18s;
+}
 @keyframes drift {
   from {
     transform: scale(1.02);
@@ -89,6 +115,7 @@
 .plateOn {
   z-index: 1;
   opacity: 1;
+  transition: opacity 2.2s ease-in-out;
 }
 /*
  * Two layers, because they protect two different things.
