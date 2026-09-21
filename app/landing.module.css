@@ -83,17 +83,6 @@
   padding: 40px var(--pad) 20px;
 }
 
-/* Hebrew has no uppercase, so the quiet-label hierarchy is size, weight and
-   colour rather than caps. Tracking stays under .02em. */
-.eyebrow {
-  margin: 0 0 20px;
-  font-family: var(--sans);
-  font-size: 12px;
-  font-weight: 300;
-  letter-spacing: 0.02em;
-  color: var(--muted);
-}
-
 .name {
   margin: 0;
   font-family: var(--font-anka), var(--serif);
@@ -107,24 +96,13 @@
   max-width: 14ch;
 }
 
-.lede {
-  margin: 22px 0 0;
-  font-family: var(--serif);
-  font-size: clamp(16px, 2.4vw, 20px);
-  font-weight: 400;
-  line-height: 1.8;
-  color: var(--ink-soft);
-  max-width: 44ch;
-  text-wrap: pretty;
-}
-
 .actions {
   display: flex;
   align-items: center;
-  gap: 26px;
-  margin-top: 38px;
-  flex-wrap: wrap;
   justify-content: center;
+  /* Wider than it was: with the name alone above it, the button needs real
+     air or the two read as one stacked block. */
+  margin-top: 46px;
 }
 
 .cta {
@@ -157,20 +135,6 @@
    from the text rather than back into it. */
 .cta:hover .arrow {
   transform: translateX(-4px);
-}
-
-.quiet {
-  font-family: var(--sans);
-  font-size: 14px;
-  font-weight: 300;
-  color: var(--umber);
-  padding-bottom: 3px;
-  border-bottom: 1px solid transparent;
-  transition: color 0.25s, border-color 0.25s;
-}
-.quiet:hover {
-  color: var(--ink);
-  border-bottom-color: var(--line);
 }
 
 .count {
@@ -231,24 +195,16 @@
  * parked at opacity 0 waiting on an observer — the animation runs on load and
  * fill-mode `both` leaves everything visible if it never starts at all.
  * ==================================================================== */
-.eyebrow,
 .name,
-.lede,
 .actions,
 .count {
   animation: arrive 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
-.name {
-  animation-delay: 0.08s;
-}
-.lede {
-  animation-delay: 0.18s;
-}
 .actions {
-  animation-delay: 0.28s;
+  animation-delay: 0.16s;
 }
 .count {
-  animation-delay: 0.38s;
+  animation-delay: 0.28s;
 }
 @keyframes arrive {
   from {
@@ -262,9 +218,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .eyebrow,
   .name,
-  .lede,
   .actions,
   .count {
     animation: none;

@@ -12,7 +12,8 @@ import s from "./landing.module.css";
  *
  * The gallery is fifty years of work; opening straight onto five hundred
  * paintings gives a visitor nowhere to stand. This is the pause before that —
- * her name, how much there is, and one way in.
+ * her name, how much there is, and one way in. Deliberately nothing else: a
+ * door with a paragraph on it is not a door.
  *
  * Never prerendered, for the same two reasons every public page is dynamic:
  * the session is read here, and a prerender would run its queries at BUILD
@@ -38,14 +39,9 @@ export default async function Landing() {
     <div className={s.door}>
       <HeroBackdrop plates={plates} />
 
+      {/* Her name and one way in. Nothing else earns a place on a door. */}
       <main className={s.stage}>
-        <p className={s.eyebrow}>ארכיון הציורים</p>
-
         <h1 className={s.name}>{ARTIST_NAME}</h1>
-
-        <p className={s.lede}>
-          חמישים שנות ציור — נופים, דיוקנאות וטבע דומם, והסיפורים שמאחוריהם, במילים שלה.
-        </p>
 
         <div className={s.actions}>
           <Link className={s.cta} href="/gallery">
@@ -53,9 +49,6 @@ export default async function Landing() {
             <span className={s.arrow} aria-hidden="true">
               ←
             </span>
-          </Link>
-          <Link className={s.quiet} href="/about">
-            אודות
           </Link>
         </div>
 
