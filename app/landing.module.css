@@ -51,17 +51,45 @@
      fine HERE and only here, because it is a wash of colour behind the veil
      rather than the work being shown. */
   display: block;
-  transform: scale(1.06);
-  transition: transform 9s linear;
+
+  /*
+   * Dark paintings were swallowing the black type.
+   *
+   * contrast() below 1 is what does the work, not brightness: brightness
+   * MULTIPLIES, so it cannot lift a black pixel off zero at all. Pulling
+   * contrast toward the midpoint raises the blacks, and a little brightness
+   * on top recovers the overall level. Together they compress the range so
+   * nothing behind the words is ever nearly black.
+   */
+  filter: contrast(0.88) brightness(1.12) saturate(0.96);
+
+  /*
+   * The slow drift.
+   *
+   * An animation on EVERY plate, not a transition on the active one. A
+   * transition only runs when the class changes, so it fired once, never
+   * finished inside the 7s hold, and snapped back on the way out. This runs
+   * continuously and alternates, so a painting is always moving and never
+   * jumps when it hands over.
+   */
+  animation: drift 20s ease-in-out infinite alternate;
+}
+/* Half of them start close and pull back, so it is not six identical pushes. */
+.plate:nth-child(even) img {
+  animation-direction: alternate-reverse;
+}
+@keyframes drift {
+  from {
+    transform: scale(1.02);
+  }
+  to {
+    transform: scale(1.14);
+  }
 }
 .plateOn {
   z-index: 1;
   opacity: 1;
 }
-.plateOn img {
-  transform: scale(1);
-}
-
 /*
  * Two layers, because they protect two different things.
  *
@@ -87,15 +115,41 @@
     ),
     radial-gradient(
       110% 82% at 50% 44%,
-      rgba(247, 244, 238, 0.86) 0%,
-      rgba(247, 244, 238, 0.66) 45%,
-      rgba(247, 244, 238, 0.3) 100%
+      rgba(247, 244, 238, 0.74) 0%,
+      rgba(247, 244, 238, 0.58) 45%,
+      rgba(247, 244, 238, 0.26) 100%
     );
 }
 
 /* ======================================================================
  * The way in
  * ==================================================================== */
+/*
+ * A second, much tighter pool of paper directly behind the words.
+ *
+ * Protecting the type with the full-screen veil meant hiding the paintings
+ * everywhere to fix a problem that only exists in the middle. This covers
+ * just the text and fades out well before the edges, so the work stays
+ * visible around it.
+ *
+ * Stacked with the veil the centre lands near 0.97 paper - comfortably past
+ * 11:1 for ink even over a black painting - while the edges keep the 0.26 the
+ * veil gives them.
+ */
+.stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    44% 30% at 50% 46%,
+    rgba(247, 244, 238, 0.88) 0%,
+    rgba(247, 244, 238, 0.55) 55%,
+    rgba(247, 244, 238, 0) 100%
+  );
+}
+
 .stage {
   position: relative;
   z-index: 1;
@@ -234,8 +288,11 @@
   .actions {
     animation: none;
   }
-  .plate,
-  .plate img {
+  .plate {
     transition: none;
+  }
+  .plate img {
+    animation: none;
+    transform: none;
   }
 }
