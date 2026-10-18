@@ -2,15 +2,15 @@
  * Demo paintings, so the gallery has a real wall to look at before the
  * digitization sessions (PLAN.md §11) produce anything.
  *
- * Twenty works across five subjects and five media, with sizes and dates that
+ * Twenty landscapes across five subjects and five media, with sizes and dates that
  * hang together. The proportions are the point: they run from a 150cm panorama
- * to an upright twice as tall as it is wide, which is the spread a mosaic needs
- * before it reads as a mosaic rather than a grid with uneven bottoms.
+ * to an upright half again as tall as it is wide, which is the spread a mosaic
+ * needs before it reads as a mosaic rather than a grid with uneven bottoms.
  *
- * The images are generated, not photographed: warm abstract washes built as SVG
- * and pushed through the same pipeline as a real upload, so the derived hash,
- * thumbhash and intrinsic size in the database are genuinely what the gallery
- * will be working with on the day.
+ * The images are public-domain paintings from the Art Institute of Chicago
+ * (CC0), uncropped, and pushed through the same pipeline as a real upload, so
+ * the derived hash, thumbhash and intrinsic size in the database are genuinely
+ * what the gallery will be working with on the day.
  *
  *   npm run db:seed-demo                 the twenty demo paintings
  *   npm run db:seed-demo -- --count 120  more, by repeating the catalogue
@@ -33,29 +33,34 @@ const MARKER = "demo-seed";
 
 /**
  * Hebrew ordinals, for the repeats past the first pass through the catalogue.
- * A painter really does return to the same subject, so "ברושים ג׳" is how the
- * third of them would actually be listed.
+ * A painter really does return to the same subject, so "בריכת הטחנה ג׳" is how
+ * the third of them would actually be listed.
  */
 const ORDINALS = ["", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ז׳", "ח׳", "ט׳", "י׳"];
 
 /* ------------------------------------------------------------------ *
  * The paintings
  *
- * Ratio is height / width. The spread is the point: a 2.6:1 panorama and a
- * 1:1.9 portrait in the same wall are what makes a mosaic look like a mosaic
- * rather than a grid with uneven bottoms.
+ * Ratio is height / width, and it is the painting's own: nothing in the first
+ * pass is cropped. The spread still runs from a 3.5:1 panorama to a 1:1.5
+ * upright, which is what makes a mosaic look like a mosaic rather than a grid
+ * with uneven bottoms.
  * ------------------------------------------------------------------ */
-type Kind = "landscape" | "portrait" | "still" | "abstract";
-
 type Demo = {
   title: string;
   year: number;
   medium: string;
-  /** Real canvas width; the height follows from the ratio. */
+  /** Canvas width; the height follows from the ratio. */
   widthCm: number;
-  /** height / width. */
+  /** height / width of the painting itself. */
   ratio: number;
-  kind: Kind;
+  /**
+   * IIIF image id of a public-domain landscape at the Art Institute of
+   * Chicago (CC0). Stand-ins until her own paintings are photographed.
+   */
+  aic: string;
+  /** The real work, so nobody mistakes a stand-in for hers. */
+  source: string;
   tags: string[];
   story: string;
 };
@@ -63,14 +68,14 @@ type Demo = {
 /**
  * Five tags and five media, and no more. A tag strip is only useful while it
  * can be read at a glance - twenty tags for twenty paintings is a list, not a
- * filter. These five are the subjects she actually returns to.
+ * filter.
  */
 const TAGS = {
   landscape: "נוף",
-  portrait: "דיוקן",
-  still: "טבע דומם",
   sea: "ים",
-  abstract: "מופשט",
+  forest: "יער",
+  mountains: "הרים",
+  water: "נהר ואגם",
 } as const;
 
 const MEDIA = {
@@ -81,227 +86,175 @@ const MEDIA = {
   gouache: "גואש על נייר",
 } as const;
 
-/**
- * Ratio is height / width, and the spread is the whole point: a 2.2:1 panorama
- * and a 1:2.15 upright in the same wall are what make a mosaic look like a
- * mosaic instead of a grid with uneven bottoms.
- */
 const DEMO: Demo[] = [
   {
-    title: "בקעה בשעת בין ערביים",
-    year: 1976, medium: MEDIA.oilCanvas, widthCm: 150, ratio: 0.45,
-    kind: "landscape", tags: [TAGS.landscape],
-    story: "הפס הארוך הזה נצבע על בד שנתפר משתי יריעות, כי שום מסגרת מוכנה לא הייתה רחבה מספיק. עבדתי עליו רק בשעה שלפני החשכה, ולכן הוא לקח קיץ שלם.",
+    title: "סערה מעל הגבעות",
+    year: 1976, medium: MEDIA.oilCanvas, widthCm: 150, ratio: 0.28,
+    aic: "976bc367-269d-17ff-0151-16b9c973aae4", source: "Elihu Vedder, Storm in Umbria, 1875",
+    tags: [TAGS.landscape],
+    story: "הפס הארוך הזה נצבע על בד שנתפר משתי יריעות, כי שום מסגרת מוכנה לא הייתה רחבה מספיק. את העננים ציירתי ביום אחד, לפני שהגשם הגיע.",
   },
   {
     title: "רצועת ים",
-    year: 2022, medium: MEDIA.oilCanvas, widthCm: 140, ratio: 0.52,
-    kind: "landscape", tags: [TAGS.sea],
+    year: 2022, medium: MEDIA.oilCanvas, widthCm: 140, ratio: 0.465,
+    aic: "50f98ea2-ea74-d991-b2fc-ddbc616283bd", source: "John Frederick Kensett, Near Newport, 1869",
+    tags: [TAGS.sea],
     story: "הציור הרחב ביותר שציירתי אי פעם. הוא לקח שלושה חודשים, ורוב הזמן הזה רק הסתכלתי עליו בלי לגעת.",
   },
   {
-    title: "רכס, בוקר מוקדם",
-    year: 1981, medium: MEDIA.oilCanvas, widthCm: 100, ratio: 0.6,
-    kind: "landscape", tags: [TAGS.landscape],
-    story: "ציירתי מהחלון של חדר האורחים, לפני שכולם התעוררו. ההר משנה צבע שלוש פעמים בין חמש לשבע.",
+    title: "מפרץ בערפל",
+    year: 2001, medium: MEDIA.oilCanvas, widthCm: 100, ratio: 0.5,
+    aic: "3192ae4d-ffca-fe91-af12-2ca681f43e13", source: "Martin Johnson Heade, York Harbor, Coast of Maine, 1877",
+    tags: [TAGS.sea],
+    story: "השמש עמדה מאחורי הערפל כמו מטבע. ניסיתי שבע פעמים לצייר את האור הזה עד שהפסקתי לנסות, וזה מה שנשאר.",
   },
   {
-    title: "מפרץ אחרי הגשם",
-    year: 2001, medium: MEDIA.oilCanvas, widthCm: 95, ratio: 0.68,
-    kind: "landscape", tags: [TAGS.sea],
-    story: "האור שאחרי הגשם הוא האור הקשה ביותר לצייר, כי הוא לא נשאר. ניסיתי שבע פעמים עד שהפסקתי לנסות.",
+    title: "בריכה בין העצים",
+    year: 1981, medium: MEDIA.oilCanvas, widthCm: 95, ratio: 0.6,
+    aic: "1501b057-0441-f1fa-e949-298b06ec6270", source: "Jean-Baptiste-Camille Corot, Landscape, 1865/70",
+    tags: [TAGS.water],
+    story: "ציירתי בצל, בשעה שבה הכול כבר ירוק-אפור. הסירה הקטנה הגיעה באמצע ונשארה בציור.",
   },
   {
-    title: "שדות בדרך לצפון",
-    year: 1994, medium: MEDIA.oilCanvas, widthCm: 110, ratio: 0.74,
-    kind: "landscape", tags: [TAGS.landscape],
-    story: "עצרנו בצד הדרך ואני ציירתי מהמושב הקדמי. הרוח הזיזה לי את הנייר כל הזמן, ובסוף השארתי את הקיפול בפנים.",
+    title: "חוף מתחת לצוקים",
+    year: 1994, medium: MEDIA.oilCanvas, widthCm: 110, ratio: 0.63,
+    aic: "4c5abec2-d94f-9afa-b689-de4dc93791f2", source: "William Bradford, The Coast of Labrador, 1866",
+    tags: [TAGS.sea],
+    story: "הצוקים נראו זהובים רק בבוקר מוקדם. ירדתי לחוף שלושה ימים ברצף כדי לתפוס את זה.",
   },
   {
-    title: "לימונים על מפה כחולה",
-    year: 2006, medium: MEDIA.oilCanvas, widthCm: 60, ratio: 0.8,
-    kind: "still", tags: [TAGS.still],
-    story: "המפה הזאת עברה אליי מאמא שלי והיא ישנה משנינו. הלימונים היו מהעץ של השכן, שלא ידע שאני לוקחת.",
+    title: "ערפל עולה בשקיעה",
+    year: 2006, medium: MEDIA.oilCanvas, widthCm: 80, ratio: 0.654,
+    aic: "30491751-fb43-fc27-51fe-d068be7b6568", source: "Sanford Robinson Gifford, Mist Rising at Sunset in the Catskills, c. 1861",
+    tags: [TAGS.mountains],
+    story: "השמש שוקעת שם מהר יותר משחשבתי. את השמיים ציירתי מהזיכרון, למחרת בבוקר.",
   },
   {
-    title: "כדים על אדן חלון",
-    year: 1999, medium: MEDIA.oilBoard, widthCm: 50, ratio: 0.88,
-    kind: "still", tags: [TAGS.still],
-    story: "שלושה כדים שקניתי בשוק בעכו בשנות השישים. ציירתי אותם עשרים פעם ובכל פעם הם יצאו אחרת.",
+    title: "ערימת חציר בשלג",
+    year: 1999, medium: MEDIA.oilCanvas, widthCm: 65, ratio: 0.7,
+    aic: "db36f74f-47d9-ad08-cdf9-b4b436e6d18c", source: "Claude Monet, Stack of Wheat (Snow Effect, Overcast Day), 1890–91",
+    tags: [TAGS.landscape],
+    story: "השלג אף פעם לא לבן באמת. בציור הזה אין אפילו נגיעה אחת של לבן נקי.",
   },
   {
-    title: "חצר בצהריים",
-    year: 2010, medium: MEDIA.water, widthCm: 45, ratio: 0.95,
-    kind: "landscape", tags: [TAGS.landscape],
-    story: "אקוורל בחוץ, בחום של אוגוסט. הצבע התייבש לי על המכחול לפני שהספקתי להגיע לנייר.",
+    title: "סירות על הנהר",
+    year: 2010, medium: MEDIA.oilBoard, widthCm: 60, ratio: 0.714,
+    aic: "c4425cb6-d8b5-6390-603d-7f802406d05d", source: "Alfred Sisley, The Seine at Port-Marly, Piles of Sand, 1875",
+    tags: [TAGS.water],
+    story: "הדייגים לא זזו כל הבוקר, אז היה לי זמן. המים זזו בשבילם.",
   },
   {
-    title: "אנמונים",
-    year: 2016, medium: MEDIA.oilCanvas, widthCm: 40, ratio: 1,
-    kind: "still", tags: [TAGS.still],
-    story: "הבן שלי הביא אותם בשבת. עד יום שלישי הם כבר נבלו, אז ציירתי מהר, ורואים את זה.",
+    title: "בריכה קטנה ליד הים",
+    year: 2016, medium: MEDIA.pastel, widthCm: 50, ratio: 0.717,
+    aic: "b4ee4891-5d7b-11ad-93df-2b64e34de991", source: "Childe Hassam, The Little Pond, Appledore, 1890",
+    tags: [TAGS.water],
+    story: "הפרחים הלבנים היו בכל מקום באותו קיץ. ציירתי מהר, לפני שהשמש עברה לצד השני.",
   },
   {
-    title: "ריבוע של אור",
-    year: 2018, medium: MEDIA.oilBoard, widthCm: 50, ratio: 1,
-    kind: "abstract", tags: [TAGS.abstract],
-    story: "בלי נושא. רק ניסיתי לתפוס איך האור נופל על רצפת הסטודיו בארבע אחר הצהריים, לפני שהוא זז.",
+    title: "אחרי גשם של קיץ",
+    year: 2018, medium: MEDIA.oilCanvas, widthCm: 70, ratio: 0.759,
+    aic: "a9546ba5-6191-4e04-e209-d22a10e7d0d7", source: "George Inness, After a Summer Shower, 1894",
+    tags: [TAGS.landscape],
+    story: "הקשת הופיעה לכמה דקות ונעלמה. את השדה ציירתי אחר כך, אבל את הקשת כבר הייתי צריכה לזכור.",
   },
   {
-    title: "תאנים ולחם",
-    year: 2003, medium: MEDIA.oilCanvas, widthCm: 58, ratio: 1.08,
-    kind: "still", tags: [TAGS.still],
-    story: "ארוחת בוקר שלא הספקתי לאכול, כי התחלתי לצייר אותה. אכלתי את התאנים אחר כך, כבר מהציור.",
+    title: "הסכר",
+    year: 2003, medium: MEDIA.oilCanvas, widthCm: 58, ratio: 0.775,
+    aic: "ff3b5c8a-5b14-5c35-8775-3d021e92a381", source: "John Constable, Landscape (The Lock), c. 1820–25",
+    tags: [TAGS.water],
+    story: "מקום חשוך וקריר באמצע אוגוסט. הענף הלבן הוא הדבר הראשון שציירתי, וכל השאר נבנה סביבו.",
   },
   {
-    title: "דיוקן של שכנה",
-    year: 1985, medium: MEDIA.oilBoard, widthCm: 45, ratio: 1.16,
-    kind: "portrait", tags: [TAGS.portrait],
-    story: "היא ישבה לי שלושה ימי שישי ברצף ולא הפסיקה לדבר אפילו לרגע. התלונות נראות בפה, אני מבטיחה.",
+    title: "סלעים מול הגלים",
+    year: 1985, medium: MEDIA.oilBoard, widthCm: 60, ratio: 0.797,
+    aic: "de060306-b5a3-5139-cad9-57e9c274d7c3", source: "Winslow Homer, Coast of Maine, 1893",
+    tags: [TAGS.sea],
+    story: "הרוח הייתה כל כך חזקה שהחזקתי את הלוח ביד אחת. הקצף יצא בדיוק כמו שרציתי.",
   },
   {
-    title: "ילדה עם צמה",
-    year: 1979, medium: MEDIA.pastel, widthCm: 40, ratio: 1.25,
-    kind: "portrait", tags: [TAGS.portrait],
-    story: "הנכדה הגדולה, כשהייתה בת שש. היום יש לה ילדים משלה, ואחד מהם יושב בדיוק באותה צורה.",
+    title: "נהר בסתיו",
+    year: 1979, medium: MEDIA.oilCanvas, widthCm: 55, ratio: 0.835,
+    aic: "bcc9c3a7-f5b0-41af-210a-bd17797d77d9", source: "Alfred Sisley, The Loire, 1896",
+    tags: [TAGS.water],
+    story: "העצים כבר איבדו את רוב העלים. אהבתי שאפשר לראות דרכם את השמיים.",
   },
   {
-    title: "חלון בחורף",
-    year: 2012, medium: MEDIA.water, widthCm: 35, ratio: 1.34,
-    kind: "still", tags: [TAGS.still],
-    story: "גשם על חלון הסטודיו וגרניום על האדן. זה אחד האקוורלים הבודדים שלא זרקתי לפח באותו חורף.",
+    title: "גשר מעל בריכת חבצלות",
+    year: 2012, medium: MEDIA.oilCanvas, widthCm: 60, ratio: 0.889,
+    aic: "8534685d-1102-e1e3-e194-94f6e925e8b0", source: "Claude Monet, Water Lily Pond, 1900",
+    tags: [TAGS.water],
+    story: "ישבתי על אותו ספסל כל בוקר במשך שבוע. ביום האחרון הבנתי שאני מציירת את ההשתקפות, לא את הגשר.",
   },
   {
-    title: "עץ זית זקן",
-    year: 1997, medium: MEDIA.oilCanvas, widthCm: 65, ratio: 1.4,
-    kind: "landscape", tags: [TAGS.landscape],
-    story: "העץ הזה עמד שם לפני כולנו ויעמוד שם אחרינו. ציירתי אותו בשנה שבה עברנו לבית ממול.",
+    title: "בתים על המצוק",
+    year: 1997, medium: MEDIA.oilCanvas, widthCm: 55, ratio: 1,
+    aic: "f72dbf42-8655-8788-d899-9e87a0466d28", source: "Childe Hassam, New England Headlands, 1899",
+    tags: [TAGS.sea],
+    story: "מלמעלה הכפר נראה כמו צעצוע. ציירתי אותו מהגבעה, עם הגב לרוח.",
   },
   {
-    title: "דיוקן עצמי עם מטפחת",
-    year: 2021, medium: MEDIA.oilBoard, widthCm: 50, ratio: 1.48,
-    kind: "portrait", tags: [TAGS.portrait],
-    story: "עשיתי אותו מול המראה הגדולה מהמסדרון. את הידיים ציירתי קודם — את הפנים כבר הכרתי.",
+    title: "פלג בהרים",
+    year: 2021, medium: MEDIA.oilCanvas, widthCm: 50, ratio: 1.228,
+    aic: "d55b0cfc-0716-d6cd-3b38-5742903ce046", source: "Albert Bierstadt, Mountain Brook, 1863",
+    tags: [TAGS.forest],
+    story: "שמעתי את המים הרבה לפני שראיתי אותם. ירדתי עם כל הציוד בשביל צר, ולא הצטערתי לרגע.",
   },
   {
-    title: "אישה קוראת",
-    year: 1983, medium: MEDIA.oilCanvas, widthCm: 55, ratio: 1.6,
-    kind: "portrait", tags: [TAGS.portrait],
-    story: "אחותי, עם ספר, ליד המנורה הצהובה שהייתה לנו בסלון. היא לא ידעה שאני מציירת אותה.",
+    title: "ערוץ באור זהוב",
+    year: 1983, medium: MEDIA.oilCanvas, widthCm: 48, ratio: 1.247,
+    aic: "dd91d801-7155-a7ee-bfb5-70b94e43e100", source: "Sanford Robinson Gifford, Kauterskill Clove, Catskill Mountains, 1880",
+    tags: [TAGS.mountains],
+    story: "האוויר בערוץ היה מלא אבק וזהב. הכול נראה רחוק יותר משהיה באמת.",
   },
   {
-    title: "סולם אל הגג",
-    year: 1992, medium: MEDIA.gouache, widthCm: 48, ratio: 1.75,
-    kind: "abstract", tags: [TAGS.abstract],
-    story: "התחיל כציור של סולם והפך למשהו אחר לגמרי. השארתי לו את השם הראשון כי הוא עוד מגיע לאנשהו.",
+    title: "בריכת הטחנה",
+    year: 1992, medium: MEDIA.oilCanvas, widthCm: 45, ratio: 1.304,
+    aic: "f837e639-5a6c-3043-3c2c-a4d5ece3bf1d", source: "George Inness, The Mill Pond, 1889",
+    tags: [TAGS.forest],
+    story: "העץ האדום הזה היה היחיד שהתחיל להחליף צבע. כל השאר הסכימו לחכות עוד שבוע.",
   },
   {
-    title: "ברושים",
-    year: 2008, medium: MEDIA.oilCanvas, widthCm: 55, ratio: 1.95,
-    kind: "landscape", tags: [TAGS.landscape],
-    story: "שני ברושים בכניסה לקיבוץ. ציירתי אותם גבוהים יותר משהם באמת, וזה לא היה בטעות.",
+    title: "חורשה בערב",
+    year: 2008, medium: MEDIA.oilBoard, widthCm: 40, ratio: 1.349,
+    aic: "4339f21a-5a1c-8f40-931c-32686eefd8d5", source: "Constant Troyon, A Clump of Trees, c. 1860",
+    tags: [TAGS.forest],
+    story: "העצים כבר כהים והשמיים עוד בהירים. יש בערך עשר דקות כאלה ביום, וזה כל מה שהיה לי.",
   },
   {
-    title: "אור מבעד לתריס",
-    year: 2017, medium: MEDIA.gouache, widthCm: 38, ratio: 2.15,
-    kind: "abstract", tags: [TAGS.abstract],
-    story: "פסים של אור על הקיר בשעת אחר הצהריים. זה כל הציור, ולא היה צריך יותר מזה.",
+    title: "יער אורנים מעל האגם",
+    year: 2017, medium: MEDIA.oilCanvas, widthCm: 50, ratio: 1.496,
+    aic: "07bdc94a-7d44-fde8-c0e1-f19fefce359d", source: "Gustave Doré, Alpine Scene, 1865",
+    tags: [TAGS.forest],
+    story: "גזעים ישרים וגבוהים, ובסוף שלהם אור. ציירתי אותם גבוהים יותר משהם באמת, וזה לא היה בטעות.",
   },
 ];
 
 /* ------------------------------------------------------------------ *
- * Image generation
+ * Images
  *
- * Deterministic, so re-running produces byte-identical originals and the
- * content-addressed store treats a re-run as a no-op instead of filling the
- * disk with near-duplicates.
+ * The IIIF server returns the same bytes for the same request, so a re-run
+ * fetches byte-identical originals and the content-addressed store treats it
+ * as a no-op. Needs network at seed time; artic.edu refuses requests without
+ * an AIC-User-Agent header.
  * ------------------------------------------------------------------ */
-function rng(seed: number) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-/** Warm, dusty, and never fighting the paper the gallery sits on. */
-const PALETTES = [
-  ["#c9a227", "#8c6a3f", "#5d4a2e", "#e8d9b5"],
-  ["#7d8c5c", "#4a5a3a", "#b8a878", "#e3dcc2"],
-  ["#a8562f", "#6b3a25", "#d19a6a", "#eddac0"],
-  ["#5c7a8c", "#33505f", "#9fb6be", "#e0e4dd"],
-  ["#8c5a72", "#5a3448", "#c295a5", "#ecdcd8"],
-  ["#b8863f", "#7a5423", "#d9b878", "#f0e4c8"],
-];
-
-function paint(w: number, h: number, kind: Kind, seed: number): string {
-  const r = rng(seed);
-  const pal = PALETTES[Math.floor(r() * PALETTES.length)]!;
-  const [c1, c2, c3, bg] = pal as [string, string, string, string];
-  const parts: string[] = [];
-
-  // A wash, so no two canvases share a flat ground.
-  parts.push(
-    `<defs><linearGradient id="g" x1="0" y1="0" x2="${r().toFixed(2)}" y2="1">` +
-      `<stop offset="0" stop-color="${bg}"/><stop offset="1" stop-color="${c3}"/></linearGradient></defs>` +
-      `<rect width="${w}" height="${h}" fill="url(#g)"/>`,
-  );
-
-  if (kind === "landscape") {
-    // Bands plus a low sun. Reads as a horizon at thumbnail size, which is the
-    // only size that matters here.
-    const horizon = h * (0.5 + r() * 0.25);
-    for (let i = 0; i < 5; i++) {
-      const y = horizon + (i * (h - horizon)) / 5;
-      parts.push(
-        `<rect x="0" y="${y.toFixed(0)}" width="${w}" height="${((h - horizon) / 4).toFixed(0)}" fill="${i % 2 ? c2 : c1}" opacity="${(0.25 + r() * 0.4).toFixed(2)}"/>`,
-      );
-    }
-    parts.push(
-      `<circle cx="${(w * (0.2 + r() * 0.6)).toFixed(0)}" cy="${(horizon * (0.4 + r() * 0.3)).toFixed(0)}" r="${(Math.min(w, h) * 0.09).toFixed(0)}" fill="${c1}" opacity="0.55"/>`,
-    );
-    for (let i = 0; i < 3; i++) {
-      const cx = w * r();
-      parts.push(
-        `<ellipse cx="${cx.toFixed(0)}" cy="${(horizon - h * 0.02).toFixed(0)}" rx="${(w * (0.05 + r() * 0.1)).toFixed(0)}" ry="${(h * (0.04 + r() * 0.09)).toFixed(0)}" fill="${c2}" opacity="0.5"/>`,
-      );
-    }
-  } else if (kind === "portrait") {
-    const cx = w / 2 + (r() - 0.5) * w * 0.1;
-    parts.push(
-      `<ellipse cx="${cx.toFixed(0)}" cy="${(h * 0.72).toFixed(0)}" rx="${(w * 0.34).toFixed(0)}" ry="${(h * 0.3).toFixed(0)}" fill="${c2}" opacity="0.75"/>`,
-      `<ellipse cx="${cx.toFixed(0)}" cy="${(h * 0.36).toFixed(0)}" rx="${(w * 0.19).toFixed(0)}" ry="${(h * 0.15).toFixed(0)}" fill="${c1}" opacity="0.85"/>`,
-      `<rect x="0" y="0" width="${w}" height="${(h * 0.22).toFixed(0)}" fill="${c3}" opacity="0.35"/>`,
-    );
-  } else if (kind === "still") {
-    const table = h * 0.72;
-    parts.push(
-      `<rect x="0" y="${table.toFixed(0)}" width="${w}" height="${(h - table).toFixed(0)}" fill="${c2}" opacity="0.6"/>`,
-    );
-    for (let i = 0; i < 4; i++) {
-      const rad = Math.min(w, h) * (0.07 + r() * 0.1);
-      parts.push(
-        `<circle cx="${(w * (0.2 + r() * 0.6)).toFixed(0)}" cy="${(table - rad * (0.6 + r())).toFixed(0)}" r="${rad.toFixed(0)}" fill="${i % 2 ? c1 : c3}" opacity="${(0.65 + r() * 0.3).toFixed(2)}"/>`,
-      );
-    }
-  } else {
-    for (let i = 0; i < 7; i++) {
-      const bw = w * (0.15 + r() * 0.5);
-      const bh = h * (0.05 + r() * 0.4);
-      parts.push(
-        `<rect x="${(r() * (w - bw)).toFixed(0)}" y="${(r() * (h - bh)).toFixed(0)}" width="${bw.toFixed(0)}" height="${bh.toFixed(0)}" fill="${[c1, c2, c3][i % 3]}" opacity="${(0.3 + r() * 0.45).toFixed(2)}"/>`,
-      );
+async function get(url: string): Promise<Response> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const res = await fetch(url, { headers: { "AIC-User-Agent": "savta-gallery demo seed" } });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      return res;
+    } catch (e) {
+      if (attempt >= 3) throw new Error(`fetching ${url}: ${(e as Error).message}`);
     }
   }
+}
 
-  // A painted edge, so the tile still reads as a canvas with the mat gone.
-  parts.push(
-    `<rect x="0" y="0" width="${w}" height="${h}" fill="none" stroke="${c2}" stroke-width="${Math.max(4, w * 0.012).toFixed(0)}" opacity="0.35"/>`,
-  );
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">${parts.join("")}</svg>`;
+/** The server refuses to upscale, so ask for no more than the scan has. */
+async function fetchPainting(imageId: string, width: number): Promise<Buffer> {
+  const base = `https://www.artic.edu/iiif/2/${imageId}`;
+  const info = (await (await get(`${base}/info.json`)).json()) as { width: number };
+  const res = await get(`${base}/full/${Math.min(width, info.width)},/0/default.jpg`);
+  return Buffer.from(await res.arrayBuffer());
 }
 
 /* ------------------------------------------------------------------ */
@@ -368,11 +321,14 @@ async function seed() {
     const year = d.year + (pass % 4);
 
     // Wide enough that the 1600px derivative is real work, not an upscale.
+    // Repeats are cropped to their varied ratio; the first pass is the
+    // painting as painted.
     const w = 1800;
-    const h = Math.round(w * ratio);
-    const jpeg = await sharp(Buffer.from(paint(w, h, d.kind, i * 7919 + 13)))
-      .jpeg({ quality: 86 })
-      .toBuffer();
+    const full = await fetchPainting(d.aic, w);
+    const jpeg =
+      pass === 0
+        ? full
+        : await sharp(full).resize(w, Math.round(w * ratio), { fit: "cover" }).jpeg({ quality: 86 }).toBuffer();
 
     const original = await storeOriginal(jpeg);
     const derived = await generateDerivatives(original.relPath);
